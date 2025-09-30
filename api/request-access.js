@@ -101,7 +101,9 @@ export default async function handler(req, res) {
     });
 
     if (!contactResponse.ok) {
-      throw new Error(`Notion contacts query failed: ${contactResponse.status}`);
+      const errorText = await contactResponse.text();
+      console.error('❌ Contacts query error:', contactResponse.status, errorText);
+      throw new Error(`Notion contacts query failed: ${contactResponse.status} - ${errorText}`);
     }
 
     const contactData = await contactResponse.json();
