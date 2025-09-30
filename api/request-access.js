@@ -92,7 +92,7 @@ export default async function handler(req, res) {
               relation: { contains: orgId }
             },
             {
-              property: 'Email',
+              property: 'Work Email',
               email: { equals: contactEmail }
             }
           ]
