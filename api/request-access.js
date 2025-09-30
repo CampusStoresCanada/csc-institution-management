@@ -26,7 +26,11 @@ export default async function handler(req, res) {
   const contactsDbId = process.env.NOTION_CONTACTS_DB_ID;
 
   if (!notionToken || !organizationsDbId || !contactsDbId) {
-    console.error('❌ Missing environment variables for access request');
+    console.error('❌ Missing environment variables for access request:', {
+      notionToken: notionToken ? 'SET' : 'MISSING',
+      organizationsDbId: organizationsDbId ? 'SET' : 'MISSING',
+      contactsDbId: contactsDbId ? 'SET' : 'MISSING'
+    });
     res.status(500).json({ error: 'Server configuration error' });
     return;
   }
