@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Your Account - CSC Institution Management</title>
+    <link rel="icon" href="https://images.squarespace-cdn.com/content/v1/5ec55d5d28a93e0e18d2eeb4/1600096854522-HS7NUI12I1ML6SPJFLLY/Artboard+1.png?format=1500w" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            background-image: url('https://images.squarespace-cdn.com/content/v1/5ec55d5d28a93e0e18d2eeb4/1600096854522-HS7NUI12I1ML6SPJFLLY/Artboard+1.png?format=1500w');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+        }
+
+        .user-details h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .user-details p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, input[type="email"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .help-text {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            color: #1565c0;
+            font-size: 14px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo"></div>
+
+        <div class="user-info" id="userInfo" style="display: none;">
+            <img class="user-avatar" id="userAvatar" src="" alt="User Avatar">
+            <div class="user-details">
+                <h3 id="userName"></h3>
+                <p>Signed in with <span id="userEmail"></span></p>
+            </div>
+        </div>
+
+        <h1>Link Your Account</h1>
+        <p class="subtitle">
+            We need to connect your Google account to your work organization.
+            Please provide your work email address so we can link your accounts.
+        </p>
+
+        <form id="linkForm">
+            <div class="form-group">
+                <label for="organizationName">Organization Name</label>
+                <input type="text" id="organizationName" name="organizationName" placeholder="Enter your institution name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="workEmail">Work Email Address</label>
+                <input type="email" id="workEmail" name="workEmail" placeholder="Enter your work email address" required>
+            </div>
+
+            <button type="submit" class="btn" id="linkBtn">
+                Link My Account
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Linking your account...</p>
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+
+        <div class="help-text">
+            <strong>Why do we need this?</strong><br>
+            Your Google account serves as secure authentication, but we need to know which organization
+            you belong to and your work email address to give you the right permissions.
+            <br><br>
+            <strong>Having trouble?</strong> Email <a href="mailto:steve@campusstores.ca">steve@campusstores.ca</a>
+        </div>
+    </div>
+
+    <script>
+        // Get Google user info from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const googleUserData = urlParams.get('google_user');
+
+        if (googleUserData) {
+            try {
+                const googleUser = JSON.parse(decodeURIComponent(googleUserData));
+
+                // Show user info
+                document.getElementById('userName').textContent = googleUser.name;
+                document.getElementById('userEmail').textContent = googleUser.email;
+                document.getElementById('userAvatar').src = googleUser.picture;
+                document.getElementById('userInfo').style.display = 'flex';
+
+            } catch (error) {
+                console.error('Error parsing Google user data:', error);
+            }
+        }
+
+        document.getElementById('linkForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const organizationName = document.getElementById('organizationName').value;
+            const workEmail = document.getElementById('workEmail').value;
+            const linkBtn = document.getElementById('linkBtn');
+            const loading = document.getElementById('loading');
+            const errorDiv = document.getElementById('errorMessage');
+
+            // Reset messages
+            errorDiv.style.display = 'none';
+
+            // Show loading
+            linkBtn.disabled = true;
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/link-account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        googleUser: googleUserData ? JSON.parse(decodeURIComponent(googleUserData)) : null,
+                        organizationName: organizationName,
+                        workEmail: workEmail
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success - redirect to management interface
+                    window.location.href = `/manage?session=${data.sessionToken}`;
+                } else {
+                    throw new Error(data.error || 'Failed to link account');
+                }
+
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+                linkBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
