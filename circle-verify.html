@@ -271,10 +271,15 @@
     </div>
 
     <script>
+        console.log('🔍 Circle verify page loaded');
+
         document.getElementById('verifyForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            console.log('📝 Form submitted');
 
             const email = document.getElementById('email').value;
+            console.log('📧 Email entered:', email);
+
             const verifyBtn = document.getElementById('verifyBtn');
             const loading = document.getElementById('loading');
             const errorDiv = document.getElementById('errorMessage');
@@ -287,8 +292,10 @@
             // Show loading
             verifyBtn.disabled = true;
             loading.style.display = 'block';
+            console.log('⏳ Loading state activated');
 
             try {
+                console.log('🌐 Making API call to /api/verify-circle-user');
                 const response = await fetch('/api/verify-circle-user', {
                     method: 'POST',
                     headers: {
@@ -299,7 +306,9 @@
                     })
                 });
 
+                console.log('📡 API response status:', response.status);
                 const data = await response.json();
+                console.log('📦 API response data:', data);
 
                 if (response.ok) {
                     // Success - store session token and redirect to tools

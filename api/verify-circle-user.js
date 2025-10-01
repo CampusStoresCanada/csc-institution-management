@@ -1,15 +1,21 @@
 // api/verify-circle-user.js - Verify user's Circle.so authentication and map to CSC identity
 export default async function handler(req, res) {
+  console.log('🚀 verify-circle-user API called');
+  console.log('📋 Method:', req.method);
+  console.log('📦 Body:', req.body);
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
+    console.log('✅ OPTIONS request handled');
     res.status(200).end();
     return;
   }
 
   if (req.method !== 'POST') {
+    console.log('❌ Invalid method:', req.method);
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
@@ -28,6 +34,13 @@ export default async function handler(req, res) {
   const notionToken = process.env.NOTION_TOKEN;
   const contactsDbId = process.env.NOTION_CONTACTS_DB_ID;
   const organizationsDbId = process.env.NOTION_ORGANIZATIONS_DB_ID;
+
+  console.log('🔧 Environment variables check:', {
+    circleApiToken: circleApiToken ? 'SET' : 'MISSING',
+    notionToken: notionToken ? 'SET' : 'MISSING',
+    contactsDbId: contactsDbId ? 'SET' : 'MISSING',
+    organizationsDbId: organizationsDbId ? 'SET' : 'MISSING'
+  });
 
   if (!circleApiToken || !notionToken || !contactsDbId) {
     console.error('❌ Missing environment variables for Circle verification');
