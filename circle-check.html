@@ -197,20 +197,39 @@
             <span>Circle.so Login Check</span>
         </div>
 
-        <h1>Checking Your Login Status</h1>
-        <p class="subtitle">We're checking if you're already logged into Circle.so...</p>
+        <h1>Circle.so Authentication</h1>
+        <p class="subtitle">Please enter your Circle.so email to verify your membership and load your organization tools</p>
 
-        <!-- Loading state -->
-        <div id="loadingState" class="status">
-            <div class="loading-spinner"></div>
-            <h3>Checking Circle.so Login</h3>
-            <p>Please wait while we verify your login status...</p>
+        <!-- Email form -->
+        <div id="emailForm" class="status">
+            <h3>🔐 Enter Your Circle.so Email</h3>
+            <p>We'll verify your Circle.so membership and load your organization tools.</p>
+
+            <form id="verifyForm" style="margin-top: 20px;">
+                <div style="margin-bottom: 15px; text-align: left;">
+                    <label for="email" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600;">Circle.so Email Address</label>
+                    <input type="email" id="email" name="email"
+                           style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px;"
+                           placeholder="Enter your Circle.so email" required>
+                </div>
+
+                <button type="submit" class="btn" id="verifyBtn">
+                    Verify Circle.so Membership
+                </button>
+            </form>
         </div>
 
-        <!-- Logged in state -->
-        <div id="loggedInState" class="status hidden">
-            <h3>✅ You're logged in!</h3>
-            <p>Great! We found your Circle.so account.</p>
+        <!-- Loading state -->
+        <div id="loadingState" class="status hidden">
+            <div class="loading-spinner"></div>
+            <h3>Verifying Circle.so Membership</h3>
+            <p>Please wait while we verify your membership and load your organization data...</p>
+        </div>
+
+        <!-- Success state -->
+        <div id="successState" class="status hidden">
+            <h3>✅ Verification Successful!</h3>
+            <p>Welcome! Loading your organization management tools...</p>
 
             <div id="userInfo" class="user-info hidden">
                 <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
@@ -219,51 +238,19 @@
                     <p id="userEmail"></p>
                 </div>
             </div>
-
-            <button type="button" class="btn" onclick="proceedToCSCTools()">
-                Continue to CSC Tools
-            </button>
-        </div>
-
-        <!-- Login options state -->
-        <div id="loginOptionsState" class="status hidden">
-            <h3>🔐 Circle.so Authentication</h3>
-            <p>To access CSC tools, please confirm you're logged into Circle.so.</p>
-
-            <button type="button" class="btn" onclick="proceedToCSCTools()">
-                ✅ I'm Already Logged In - Continue
-            </button>
-
-            <a href="https://memberspace.campusstores.ca/users/sign_in" target="_blank" class="btn secondary">
-                🔓 I Need to Log In First
-            </a>
-        </div>
-
-        <!-- Not logged in state -->
-        <div id="notLoggedInState" class="status hidden">
-            <h3>🔐 Circle.so Login Required</h3>
-            <p>You need to be logged into Circle.so to access CSC tools.</p>
-
-            <a href="https://memberspace.campusstores.ca/users/sign_in" target="_blank" class="btn">
-                Log into Circle.so
-            </a>
-
-            <button type="button" class="btn secondary" onclick="recheckLogin()">
-                I'm Logged In - Check Again
-            </button>
         </div>
 
         <!-- Error state -->
         <div id="errorState" class="status hidden">
-            <h3>⚠️ Unable to Check Login</h3>
-            <p>We couldn't verify your Circle.so login status.</p>
+            <h3>⚠️ Verification Failed</h3>
+            <p id="errorMessage">We couldn't verify your Circle.so membership.</p>
 
-            <button type="button" class="btn" onclick="recheckLogin()">
+            <button type="button" class="btn" onclick="showEmailForm()">
                 Try Again
             </button>
 
-            <a href="/" class="btn secondary">
-                Back to Main Page
+            <a href="https://memberspace.campusstores.ca" target="_blank" class="btn secondary">
+                Go to Circle.so
             </a>
         </div>
 
@@ -272,89 +259,105 @@
     </div>
 
     <script>
-        console.log('🔍 Circle login check page loaded');
+        console.log('🔍 Circle authentication page loaded');
 
-        // Immediately start checking login status
-        checkCircleLoginStatus();
+        // Set up form handler
+        document.getElementById('verifyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
 
-        async function checkCircleLoginStatus() {
-            console.log('🔐 Starting Circle.so login check...');
+            const email = document.getElementById('email').value;
+            console.log('📧 Verifying email:', email);
 
-            // Show options instead of auto-redirecting
-            showLoginOptions();
-        }
+            // Show loading state
+            showLoadingState();
 
-        function showLoginOptions() {
-            console.log('📋 Showing login options to user');
+            try {
+                const response = await fetch('/api/verify-circle-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email
+                    })
+                });
 
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('loginOptionsState').classList.remove('hidden');
-        }
+                const data = await response.json();
+                console.log('📦 API response:', data);
 
-        function showLoggedInState(userData = null) {
-            console.log('✅ Showing logged in state:', userData);
+                if (response.ok) {
+                    // Success - show user info and redirect
+                    showSuccessState(data.user, data.session_token);
+                } else {
+                    // Error - show error message
+                    showErrorState(data.error || data.message || 'Verification failed');
+                }
 
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('notLoggedInState').classList.add('hidden');
+            } catch (error) {
+                console.error('❌ Verification failed:', error);
+                showErrorState('Network error: ' + error.message);
+            }
+        });
+
+        function showLoadingState() {
+            document.getElementById('emailForm').classList.add('hidden');
+            document.getElementById('successState').classList.add('hidden');
             document.getElementById('errorState').classList.add('hidden');
-            document.getElementById('loggedInState').classList.remove('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+        }
 
-            if (userData) {
-                document.getElementById('userName').textContent = userData.name || 'Circle.so Member';
-                document.getElementById('userEmail').textContent = userData.email || '';
+        function showSuccessState(userData, sessionToken) {
+            console.log('✅ Showing success state:', userData);
 
-                if (userData.avatar_url) {
-                    document.getElementById('userAvatar').src = userData.avatar_url;
+            document.getElementById('emailForm').classList.add('hidden');
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.add('hidden');
+            document.getElementById('successState').classList.remove('hidden');
+
+            // Store session token
+            sessionStorage.setItem('csc_session_token', sessionToken);
+            sessionStorage.setItem('csc_user_data', JSON.stringify(userData));
+
+            // Show user info if available
+            if (userData && userData.circle) {
+                document.getElementById('userName').textContent = userData.circle.name || 'Circle.so Member';
+                document.getElementById('userEmail').textContent = userData.circle.email || '';
+
+                if (userData.circle.avatar_url) {
+                    document.getElementById('userAvatar').src = userData.circle.avatar_url;
                     document.getElementById('userInfo').classList.remove('hidden');
                 }
             }
-        }
 
-        function showNotLoggedInState() {
-            console.log('🔐 Showing not logged in state');
-
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('loggedInState').classList.add('hidden');
-            document.getElementById('errorState').classList.add('hidden');
-            document.getElementById('notLoggedInState').classList.remove('hidden');
+            // Auto-redirect to management tools after delay
+            setTimeout(() => {
+                window.location.href = '/manage';
+            }, 3000);
         }
 
         function showErrorState(message) {
             console.log('❌ Showing error state:', message);
 
+            document.getElementById('emailForm').classList.add('hidden');
             document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('loggedInState').classList.add('hidden');
-            document.getElementById('notLoggedInState').classList.add('hidden');
+            document.getElementById('successState').classList.add('hidden');
             document.getElementById('errorState').classList.remove('hidden');
 
-            if (message) {
-                document.getElementById('errorMessage').textContent = message;
-                document.getElementById('errorMessage').classList.remove('hidden');
-            }
+            document.getElementById('errorMessage').textContent = message;
         }
 
-        function recheckLogin() {
-            console.log('🔄 Rechecking login status...');
-
-            // Reset to loading state
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('loggedInState').classList.add('hidden');
-            document.getElementById('notLoggedInState').classList.add('hidden');
+        function showEmailForm() {
+            document.getElementById('emailForm').classList.remove('hidden');
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('successState').classList.add('hidden');
             document.getElementById('errorState').classList.add('hidden');
-            document.getElementById('errorMessage').classList.add('hidden');
 
-            // Recheck after a short delay
-            setTimeout(checkCircleLoginStatus, 1000);
+            // Reset form
+            document.getElementById('verifyForm').reset();
         }
 
         function proceedToCSCTools() {
             console.log('🚀 Proceeding to CSC tools...');
-
-            // Store login confirmation
-            sessionStorage.setItem('circle_login_verified', 'true');
-            sessionStorage.setItem('circle_login_time', Date.now().toString());
-
-            // Redirect to management interface
             window.location.href = '/manage';
         }
     </script>
