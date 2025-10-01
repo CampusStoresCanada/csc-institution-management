@@ -118,7 +118,9 @@ export default async function handler(req, res) {
     console.log(`✅ Found ${teamMembers.length} team members`);
 
     res.status(200).json({
-      teamMembers,
+      contacts: teamMembers, // Frontend expects 'contacts'
+      teamMembers: teamMembers, // Also provide as teamMembers for compatibility
+      organizationName: session.csc.organization_name,
       userRole,
       currentUserId
     });
