@@ -225,6 +225,20 @@
             </button>
         </div>
 
+        <!-- Login options state -->
+        <div id="loginOptionsState" class="status hidden">
+            <h3>🔐 Circle.so Authentication</h3>
+            <p>To access CSC tools, please confirm you're logged into Circle.so.</p>
+
+            <button type="button" class="btn" onclick="proceedToCSCTools()">
+                ✅ I'm Already Logged In - Continue
+            </button>
+
+            <a href="https://memberspace.campusstores.ca/users/sign_in" target="_blank" class="btn secondary">
+                🔓 I Need to Log In First
+            </a>
+        </div>
+
         <!-- Not logged in state -->
         <div id="notLoggedInState" class="status hidden">
             <h3>🔐 Circle.so Login Required</h3>
@@ -266,21 +280,15 @@
         async function checkCircleLoginStatus() {
             console.log('🔐 Starting Circle.so login check...');
 
-            // Since we can't directly check due to CORS/security, let's use a different approach:
-            // Redirect to Circle.so with a return URL that confirms login status
+            // Show options instead of auto-redirecting
+            showLoginOptions();
+        }
 
-            const returnUrl = encodeURIComponent(window.location.origin + '/circle-login-callback');
-            const circleCheckUrl = `https://memberspace.campusstores.ca/users/sign_in?post_login_redirect=${returnUrl}`;
+        function showLoginOptions() {
+            console.log('📋 Showing login options to user');
 
-            console.log('🧭 Redirecting to Circle.so for login check:', circleCheckUrl);
-
-            // Instead of direct detection, redirect to Circle.so
-            // If they're logged in, they'll be redirected back immediately
-            // If not, they'll see the login screen
-
-            setTimeout(() => {
-                window.location.href = circleCheckUrl;
-            }, 2000); // Give user a moment to see the loading screen
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('loginOptionsState').classList.remove('hidden');
         }
 
         function showLoggedInState(userData = null) {
