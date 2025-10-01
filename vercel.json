@@ -3,6 +3,10 @@
   "outputDirectory": ".",
   "rewrites": [
     {
+      "source": "/circle-check",
+      "destination": "/circle-check.html"
+    },
+    {
       "source": "/circle-verify",
       "destination": "/circle-verify.html"
     },
