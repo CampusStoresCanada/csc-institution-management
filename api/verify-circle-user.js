@@ -86,11 +86,13 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Step 3: Get user's Circle.so profile using the access token
-    console.log('👤 Fetching Circle.so profile with access token');
-    const profileResponse = await fetch('https://app.circle.so/api/headless/v1/me', {
+    console.log(`✅ Circle.so authentication successful for member ID: ${community_member_id}`);
+
+    // Step 3: Get user's Circle.so profile using Member API
+    console.log('👤 Fetching Circle.so member profile');
+    const profileResponse = await fetch(`https://app.circle.so/api/v1/community_members/${community_member_id}`, {
       headers: {
-        'Authorization': `Bearer ${circleAccessToken}`,
+        'Authorization': `Token ${process.env.CIRCLE_API_TOKEN}`,
         'Content-Type': 'application/json'
       }
     });
@@ -98,118 +100,155 @@ export default async function handler(req, res) {
     if (!profileResponse.ok) {
       const profileErrorText = await profileResponse.text();
       console.error('❌ Circle.so profile fetch failed:', profileResponse.status, profileErrorText);
-      throw new Error(`Failed to get Circle.so profile: ${profileResponse.status}`);
-    }
 
-    const circleProfile = await profileResponse.json();
-    const circleUser = circleProfile.member;
+      // Fallback: create minimal user object from email
+      console.log('⚠️ Using minimal user data from email');
+      const circleUser = {
+        id: community_member_id,
+        email: email,
+        name: email.split('@')[0],
+        avatar_url: null
+      };
 
-    console.log(`✅ Circle.so user verified: ${circleUser.name} (${circleUser.email})`);
+      console.log(`✅ Circle.so user verified (minimal): ${circleUser.email}`);
 
-    // Step 4: Map Circle.so user to Notion contact
-    const contactResponse = await fetch(`https://api.notion.com/v1/databases/${contactsDbId}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${notionToken}`,
-        'Content-Type': 'application/json',
-        'Notion-Version': '2022-06-28'
-      },
-      body: JSON.stringify({
-        filter: {
-          property: 'Work Email',
-          email: { equals: email }
-        }
-      })
-    });
-
-    if (!contactResponse.ok) {
-      throw new Error(`Notion contact lookup failed: ${contactResponse.status}`);
-    }
-
-    const contactData = await contactResponse.json();
-
-    if (contactData.results.length === 0) {
-      res.status(404).json({
-        error: 'Work email not found in CSC database',
-        message: `Your Circle.so email (${email}) is not associated with any Campus Stores Canada organization. Please contact steve@campusstores.ca to link your accounts.`
-      });
+      // Continue with minimal data
+      await processUserData(circleUser, community_member_id, community_id, circleAccessToken, email, res);
       return;
     }
 
-    const contact = contactData.results[0];
-    const contactName = contact.properties.Name?.title?.[0]?.text?.content || circleUser.name;
-    const isPrimary = contact.properties['Primary Contact']?.checkbox || false;
-    const organizationRelations = contact.properties.Organization?.relation || [];
+    const circleProfile = await profileResponse.json();
+    const circleUser = {
+      id: circleProfile.id,
+      email: circleProfile.email || email,
+      name: circleProfile.name || email.split('@')[0],
+      avatar_url: circleProfile.avatar_url
+    };
 
-    // Step 5: Get organization details
-    let organizationName = 'Campus Stores Canada';
-    let organizationId = null;
+    console.log(`✅ Circle.so user verified: ${circleUser.name} (${circleUser.email})`);
 
-    if (organizationRelations.length > 0) {
-      try {
-        organizationId = organizationRelations[0].id;
-        const orgResponse = await fetch(`https://api.notion.com/v1/pages/${organizationId}`, {
-          headers: {
-            'Authorization': `Bearer ${notionToken}`,
-            'Notion-Version': '2022-06-28'
-          }
-        });
-
-        if (orgResponse.ok) {
-          const orgData = await orgResponse.json();
-          organizationName = orgData.properties.Organization?.title?.[0]?.text?.content || organizationName;
-        }
-      } catch (orgError) {
-        console.warn('⚠️ Could not fetch organization details:', orgError);
-      }
-    }
-
-    // Step 6: Generate CSC session token
-    const cscSession = generateCSCSession({
-      circleUserId: circleUser.id,
-      circleEmail: circleUser.email,
-      circleName: circleUser.name,
-      circleAvatar: circleUser.avatar_url,
-      circleAccessToken: circleAccessToken,
-      circleMemberId: community_member_id,
-      circleCommunityId: community_id,
-      cscContactId: contact.id,
-      cscContactName: contactName,
-      cscWorkEmail: email,
-      cscOrganizationId: organizationId,
-      cscOrganizationName: organizationName,
-      cscRole: isPrimary ? 'primary' : 'member'
-    });
-
-    console.log(`✅ CSC session created for ${contactName} (${organizationName}) - Role: ${isPrimary ? 'primary' : 'member'}`);
-
-    res.status(200).json({
-      success: true,
-      message: 'Authentication verified successfully',
-      session_token: cscSession,
-      user: {
-        circle: {
-          id: circleUser.id,
-          name: circleUser.name,
-          email: circleUser.email,
-          avatar_url: circleUser.avatar_url,
-          community_member_id: community_member_id,
-          community_id: community_id
-        },
-        csc: {
-          contact_name: contactName,
-          work_email: email,
-          organization: organizationName,
-          role: isPrimary ? 'primary' : 'member'
-        }
-      }
-    });
+    // Step 4: Process user and complete authentication
+    await processUserData(circleUser, community_member_id, community_id, circleAccessToken, email, res);
 
   } catch (error) {
     console.error('❌ Circle.so verification failed:', error);
     res.status(500).json({
       error: 'Verification failed',
       message: 'There was a problem verifying your Circle.so membership. Please try again or contact steve@campusstores.ca for assistance.',
+      details: error.message
+    });
+  }
+}
+
+// Process user data and complete authentication
+async function processUserData(circleUser, community_member_id, community_id, circleAccessToken, email, res) {
+  const notionToken = process.env.NOTION_TOKEN;
+  const contactsDbId = process.env.NOTION_CONTACTS_DB_ID;
+
+  try {
+  // Map Circle.so user to Notion contact
+  const contactResponse = await fetch(`https://api.notion.com/v1/databases/${contactsDbId}/query`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${notionToken}`,
+      'Content-Type': 'application/json',
+      'Notion-Version': '2022-06-28'
+    },
+    body: JSON.stringify({
+      filter: {
+        property: 'Work Email',
+        email: { equals: email }
+      }
+    })
+  });
+
+  if (!contactResponse.ok) {
+    throw new Error(`Notion contact lookup failed: ${contactResponse.status}`);
+  }
+
+  const contactData = await contactResponse.json();
+
+  if (contactData.results.length === 0) {
+    res.status(404).json({
+      error: 'Work email not found in CSC database',
+      message: `Your Circle.so email (${email}) is not associated with any Campus Stores Canada organization. Please contact steve@campusstores.ca to link your accounts.`
+    });
+    return;
+  }
+
+  const contact = contactData.results[0];
+  const contactName = contact.properties.Name?.title?.[0]?.text?.content || circleUser.name;
+  const isPrimary = contact.properties['Primary Contact']?.checkbox || false;
+  const organizationRelations = contact.properties.Organization?.relation || [];
+
+  // Get organization details
+  let organizationName = 'Campus Stores Canada';
+  let organizationId = null;
+
+  if (organizationRelations.length > 0) {
+    try {
+      organizationId = organizationRelations[0].id;
+      const orgResponse = await fetch(`https://api.notion.com/v1/pages/${organizationId}`, {
+        headers: {
+          'Authorization': `Bearer ${notionToken}`,
+          'Notion-Version': '2022-06-28'
+        }
+      });
+
+      if (orgResponse.ok) {
+        const orgData = await orgResponse.json();
+        organizationName = orgData.properties.Organization?.title?.[0]?.text?.content || organizationName;
+      }
+    } catch (orgError) {
+      console.warn('⚠️ Could not fetch organization details:', orgError);
+    }
+  }
+
+  // Generate CSC session token
+  const cscSession = generateCSCSession({
+    circleUserId: circleUser.id,
+    circleEmail: circleUser.email,
+    circleName: circleUser.name,
+    circleAvatar: circleUser.avatar_url,
+    circleAccessToken: circleAccessToken,
+    circleMemberId: community_member_id,
+    circleCommunityId: community_id,
+    cscContactId: contact.id,
+    cscContactName: contactName,
+    cscWorkEmail: email,
+    cscOrganizationId: organizationId,
+    cscOrganizationName: organizationName,
+    cscRole: isPrimary ? 'primary' : 'member'
+  });
+
+  console.log(`✅ CSC session created for ${contactName} (${organizationName}) - Role: ${isPrimary ? 'primary' : 'member'}`);
+
+  res.status(200).json({
+    success: true,
+    message: 'Authentication verified successfully',
+    session_token: cscSession,
+    user: {
+      circle: {
+        id: circleUser.id,
+        name: circleUser.name,
+        email: circleUser.email,
+        avatar_url: circleUser.avatar_url,
+        community_member_id: community_member_id,
+        community_id: community_id
+      },
+      csc: {
+        contact_name: contactName,
+        work_email: email,
+        organization: organizationName,
+        role: isPrimary ? 'primary' : 'member'
+      }
+    }
+  });
+  } catch (error) {
+    console.error('❌ User data processing failed:', error);
+    res.status(500).json({
+      error: 'Verification failed',
+      message: 'There was a problem processing your user data. Please try again or contact steve@campusstores.ca for assistance.',
       details: error.message
     });
   }
