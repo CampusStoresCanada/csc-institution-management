@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "CSC Institution and Team Management Tool",
   "main": "index.html",
+  "type": "module",
   "scripts": {
     "build": "echo 'No build step required for static site'"
   },
