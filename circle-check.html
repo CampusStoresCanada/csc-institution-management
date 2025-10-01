@@ -230,7 +230,7 @@
             <h3>🔐 Circle.so Login Required</h3>
             <p>You need to be logged into Circle.so to access CSC tools.</p>
 
-            <a href="https://memberspace.campusstores.ca" target="_blank" class="btn">
+            <a href="https://memberspace.campusstores.ca/users/sign_in" target="_blank" class="btn">
                 Log into Circle.so
             </a>
 
@@ -270,7 +270,7 @@
             // Redirect to Circle.so with a return URL that confirms login status
 
             const returnUrl = encodeURIComponent(window.location.origin + '/circle-login-callback');
-            const circleCheckUrl = `https://memberspace.campusstores.ca/login?return_to=${returnUrl}`;
+            const circleCheckUrl = `https://memberspace.campusstores.ca/users/sign_in?post_login_redirect=${returnUrl}`;
 
             console.log('🧭 Redirecting to Circle.so for login check:', circleCheckUrl);
 
