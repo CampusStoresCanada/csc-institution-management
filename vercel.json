@@ -3,6 +3,18 @@
   "outputDirectory": ".",
   "rewrites": [
     {
+      "source": "/circle-verify",
+      "destination": "/circle-verify.html"
+    },
+    {
+      "source": "/link-organization",
+      "destination": "/link-organization.html"
+    },
+    {
+      "source": "/circle-login",
+      "destination": "/circle-login.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
