@@ -79,10 +79,6 @@ export default async function handler(req, res) {
         },
         sorts: [
           {
-            property: 'Primary Contact',
-            direction: 'descending'
-          },
-          {
             property: 'Name',
             direction: 'ascending'
           }
@@ -104,7 +100,10 @@ export default async function handler(req, res) {
     console.log('🔍 Step 3: Mapping contacts to team member format...');
     const teamMembers = contactsData.results.map((contact, index) => {
       try {
-        const isPrimary = contact.properties['Primary Contact']?.checkbox || false;
+        // Check for Primary Contact checkbox - may have different property name
+        const isPrimary = contact.properties['Primary Contact']?.checkbox ||
+                         contact.properties['Primary']?.checkbox ||
+                         false;
         const contactId = contact.id;
         const isCurrentUser = contactId === currentUserId;
 
@@ -128,7 +127,7 @@ export default async function handler(req, res) {
           canChangePrimary: canChangePrimary
         };
 
-        console.log(`  ✅ Contact ${index + 1}: ${member.name} (${member.email})`);
+        console.log(`  ✅ Contact ${index + 1}: ${member.name} (${member.email}) - Primary: ${isPrimary}`);
         return member;
       } catch (mapError) {
         console.error(`❌ Error mapping contact ${index}:`, mapError, contact);
@@ -136,7 +135,14 @@ export default async function handler(req, res) {
       }
     });
 
-    console.log(`✅ Successfully mapped ${teamMembers.length} team members`);
+    // Sort with primary contacts first, then alphabetically by name
+    teamMembers.sort((a, b) => {
+      if (a.isPrimary && !b.isPrimary) return -1;
+      if (!a.isPrimary && b.isPrimary) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    console.log(`✅ Successfully mapped and sorted ${teamMembers.length} team members`);
 
     console.log('🔍 Step 4: Sending response...');
     const responseData = {
