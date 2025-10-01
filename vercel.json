@@ -7,20 +7,8 @@
       "destination": "/circle-check.html"
     },
     {
-      "source": "/circle-login-callback",
-      "destination": "/circle-login-callback.html"
-    },
-    {
-      "source": "/circle-verify",
-      "destination": "/circle-verify.html"
-    },
-    {
-      "source": "/link-organization",
-      "destination": "/link-organization.html"
-    },
-    {
-      "source": "/circle-login",
-      "destination": "/circle-login.html"
+      "source": "/manage",
+      "destination": "/manage.html"
     },
     {
       "source": "/(.*)",

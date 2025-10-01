@@ -1,8 +1,9 @@
 // api/verify-circle-user.js - Verify user's Circle.so authentication and map to CSC identity
+import { createClient } from '@circleco/headless-server-sdk';
+
 export default async function handler(req, res) {
   console.log('🚀 verify-circle-user API called');
   console.log('📋 Method:', req.method);
-  console.log('📦 Body:', req.body);
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -20,12 +21,12 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { email, user_id } = req.body;
+  const { email } = req.body;
 
-  if (!email && !user_id) {
+  if (!email) {
     res.status(400).json({
-      error: 'Either email or user_id is required',
-      message: 'Please provide your Circle.so user information'
+      error: 'Email is required',
+      message: 'Please provide your Circle.so email address'
     });
     return;
   }
@@ -33,13 +34,11 @@ export default async function handler(req, res) {
   const circleApiToken = process.env.CIRCLE_API_TOKEN;
   const notionToken = process.env.NOTION_TOKEN;
   const contactsDbId = process.env.NOTION_CONTACTS_DB_ID;
-  const organizationsDbId = process.env.NOTION_ORGANIZATIONS_DB_ID;
 
   console.log('🔧 Environment variables check:', {
     circleApiToken: circleApiToken ? 'SET' : 'MISSING',
     notionToken: notionToken ? 'SET' : 'MISSING',
-    contactsDbId: contactsDbId ? 'SET' : 'MISSING',
-    organizationsDbId: organizationsDbId ? 'SET' : 'MISSING'
+    contactsDbId: contactsDbId ? 'SET' : 'MISSING'
   });
 
   if (!circleApiToken || !notionToken || !contactsDbId) {
@@ -49,32 +48,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log(`🔍 Verifying Circle.so user: ${email || user_id}`);
+    console.log(`🔍 Verifying Circle.so user: ${email}`);
 
-    // Step 1: Get user's Circle.so authentication token
-    const authPayload = {};
-    if (email) authPayload.email = email;
-    if (user_id) authPayload.community_member_id = user_id;
+    // Step 1: Initialize Circle.so SDK client
+    const circleClient = createClient({ appToken: circleApiToken });
 
-    console.log('🎯 Circle.so auth payload:', authPayload);
-    console.log('🔑 Using Circle API token:', circleApiToken ? 'Token present' : 'Token missing');
+    // Step 2: Get user's Circle.so authentication token using SDK
+    let circleAuth;
+    try {
+      circleAuth = await circleClient.getMemberAPITokenFromEmail(email);
+      console.log('✅ Circle.so authentication successful');
+    } catch (circleError) {
+      console.error('❌ Circle.so authentication failed:', circleError);
 
-    const circleAuthResponse = await fetch('https://app.circle.so/api/v1/headless/auth_token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${circleApiToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(authPayload)
-    });
-
-    console.log('📡 Circle.so auth response status:', circleAuthResponse.status);
-
-    if (!circleAuthResponse.ok) {
-      const errorText = await circleAuthResponse.text();
-      console.error('❌ Circle.so authentication failed:', circleAuthResponse.status, errorText);
-
-      if (circleAuthResponse.status === 404) {
+      // Check if it's a 404 (user not found)
+      if (circleError.message && circleError.message.includes('404')) {
         res.status(404).json({
           error: 'User not found in Circle.so community',
           message: 'Please make sure you have joined the Campus Stores Canada community on Circle.so first.'
@@ -88,8 +76,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const circleAuth = await circleAuthResponse.json();
-    const circleAccessToken = circleAuth.access_token;
+    const { access_token: circleAccessToken, community_member_id, community_id } = circleAuth;
 
     if (!circleAccessToken) {
       res.status(401).json({
@@ -99,7 +86,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Step 2: Get user's Circle.so profile
+    // Step 3: Get user's Circle.so profile using the access token
     console.log('👤 Fetching Circle.so profile with access token');
     const profileResponse = await fetch('https://app.circle.so/api/headless/v1/me', {
       headers: {
@@ -107,8 +94,6 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       }
     });
-
-    console.log('📡 Circle.so profile response status:', profileResponse.status);
 
     if (!profileResponse.ok) {
       const profileErrorText = await profileResponse.text();
@@ -121,9 +106,7 @@ export default async function handler(req, res) {
 
     console.log(`✅ Circle.so user verified: ${circleUser.name} (${circleUser.email})`);
 
-    // Step 3: Map Circle.so user to Notion contact
-    const searchEmail = email || circleUser.email;
-
+    // Step 4: Map Circle.so user to Notion contact
     const contactResponse = await fetch(`https://api.notion.com/v1/databases/${contactsDbId}/query`, {
       method: 'POST',
       headers: {
@@ -134,7 +117,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         filter: {
           property: 'Work Email',
-          email: { equals: searchEmail }
+          email: { equals: email }
         }
       })
     });
@@ -148,7 +131,7 @@ export default async function handler(req, res) {
     if (contactData.results.length === 0) {
       res.status(404).json({
         error: 'Work email not found in CSC database',
-        message: `Your Circle.so email (${searchEmail}) is not associated with any Campus Stores Canada organization. Please contact steve@campusstores.ca to link your accounts.`
+        message: `Your Circle.so email (${email}) is not associated with any Campus Stores Canada organization. Please contact steve@campusstores.ca to link your accounts.`
       });
       return;
     }
@@ -158,7 +141,7 @@ export default async function handler(req, res) {
     const isPrimary = contact.properties['Primary Contact']?.checkbox || false;
     const organizationRelations = contact.properties.Organization?.relation || [];
 
-    // Step 4: Get organization details
+    // Step 5: Get organization details
     let organizationName = 'Campus Stores Canada';
     let organizationId = null;
 
@@ -181,16 +164,18 @@ export default async function handler(req, res) {
       }
     }
 
-    // Step 5: Generate CSC session token
+    // Step 6: Generate CSC session token
     const cscSession = generateCSCSession({
       circleUserId: circleUser.id,
       circleEmail: circleUser.email,
       circleName: circleUser.name,
       circleAvatar: circleUser.avatar_url,
       circleAccessToken: circleAccessToken,
+      circleMemberId: community_member_id,
+      circleCommunityId: community_id,
       cscContactId: contact.id,
       cscContactName: contactName,
-      cscWorkEmail: searchEmail,
+      cscWorkEmail: email,
       cscOrganizationId: organizationId,
       cscOrganizationName: organizationName,
       cscRole: isPrimary ? 'primary' : 'member'
@@ -207,11 +192,13 @@ export default async function handler(req, res) {
           id: circleUser.id,
           name: circleUser.name,
           email: circleUser.email,
-          avatar_url: circleUser.avatar_url
+          avatar_url: circleUser.avatar_url,
+          community_member_id: community_member_id,
+          community_id: community_id
         },
         csc: {
           contact_name: contactName,
-          work_email: searchEmail,
+          work_email: email,
           organization: organizationName,
           role: isPrimary ? 'primary' : 'member'
         }
@@ -237,7 +224,9 @@ function generateCSCSession(userData) {
       email: userData.circleEmail,
       name: userData.circleName,
       avatar_url: userData.circleAvatar,
-      access_token: userData.circleAccessToken
+      access_token: userData.circleAccessToken,
+      community_member_id: userData.circleMemberId,
+      community_id: userData.circleCommunityId
     },
     // CSC/Notion identity
     csc: {

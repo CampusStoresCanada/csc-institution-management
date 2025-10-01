@@ -164,6 +164,48 @@
             font-size: 14px;
         }
 
+        .circle-status {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logged-in-user {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .user-info {
+            background: #e8f5e8;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #4caf50;
+        }
+
+        .user-details {
+            text-align: left;
+        }
+
+        .user-details h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .user-details p {
+            color: #4caf50;
+            font-size: 14px;
+            margin: 0;
+        }
+
         .loading {
             display: none;
             margin-top: 20px;
@@ -209,10 +251,10 @@
         <h1>CSC Tools Access</h1>
         <p class="subtitle">Access Campus Stores Canada tools using your Circle.so membership</p>
 
-        <div class="access-options">
-            <button type="button" class="btn google-btn" id="circleAccessBtn">
+        <div class="access-options" id="accessOptions">
+            <button type="button" class="btn google-btn" id="loginToCircleBtn">
                 <div style="width: 20px; height: 20px; background: #667eea; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; margin-right: 10px;">C</div>
-                Continue with Circle.so
+                Sign in to Circle.so
             </button>
 
             <div class="divider">
@@ -223,6 +265,7 @@
                 Request Access via Email
             </button>
         </div>
+
 
         <!-- Email form (hidden by default) -->
         <form class="access-form" id="accessForm" style="display: none;">
@@ -268,7 +311,7 @@
         // Circle.so Access
         console.log('🔧 Main page loaded, setting up Circle button');
 
-        document.getElementById('circleAccessBtn').addEventListener('click', function() {
+        document.getElementById('loginToCircleBtn').addEventListener('click', function() {
             console.log('🔵 Circle button clicked!');
             console.log('🧭 Attempting redirect to /circle-check');
             // Redirect to Circle login check

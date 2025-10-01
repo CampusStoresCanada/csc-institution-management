@@ -4,9 +4,7 @@
   "description": "CSC Institution and Team Management Tool",
   "main": "index.html",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'No build step required for static site'",
-    "start": "vercel dev"
+    "build": "echo 'No build step required for static site'"
   },
   "repository": {
     "type": "git",
@@ -16,5 +14,8 @@
   "license": "MIT",
   "devDependencies": {
     "@vercel/node": "^2.0.0"
+  },
+  "dependencies": {
+    "@circleco/headless-server-sdk": "^0.0.5"
   }
 }
