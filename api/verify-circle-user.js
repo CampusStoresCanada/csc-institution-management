@@ -56,6 +56,9 @@ export default async function handler(req, res) {
     if (email) authPayload.email = email;
     if (user_id) authPayload.community_member_id = user_id;
 
+    console.log('🎯 Circle.so auth payload:', authPayload);
+    console.log('🔑 Using Circle API token:', circleApiToken ? 'Token present' : 'Token missing');
+
     const circleAuthResponse = await fetch('https://app.circle.so/api/v1/headless/auth_token', {
       method: 'POST',
       headers: {
@@ -64,6 +67,8 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify(authPayload)
     });
+
+    console.log('📡 Circle.so auth response status:', circleAuthResponse.status);
 
     if (!circleAuthResponse.ok) {
       const errorText = await circleAuthResponse.text();
@@ -95,6 +100,7 @@ export default async function handler(req, res) {
     }
 
     // Step 2: Get user's Circle.so profile
+    console.log('👤 Fetching Circle.so profile with access token');
     const profileResponse = await fetch('https://app.circle.so/api/headless/v1/me', {
       headers: {
         'Authorization': `Bearer ${circleAccessToken}`,
@@ -102,7 +108,11 @@ export default async function handler(req, res) {
       }
     });
 
+    console.log('📡 Circle.so profile response status:', profileResponse.status);
+
     if (!profileResponse.ok) {
+      const profileErrorText = await profileResponse.text();
+      console.error('❌ Circle.so profile fetch failed:', profileResponse.status, profileErrorText);
       throw new Error(`Failed to get Circle.so profile: ${profileResponse.status}`);
     }
 
