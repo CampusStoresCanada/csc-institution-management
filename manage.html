@@ -241,41 +241,44 @@
     <script>
         console.log('📄 Manage page loaded');
 
-        // Check for session token
-        const sessionToken = sessionStorage.getItem('csc_session_token');
-        const userDataString = sessionStorage.getItem('csc_user_data');
+        // Initialize page
+        (function initializePage() {
+            // Check for session token
+            const sessionToken = sessionStorage.getItem('csc_session_token');
+            const userDataString = sessionStorage.getItem('csc_user_data');
 
-        if (!sessionToken || !userDataString) {
-            console.log('❌ No session found, redirecting to login');
-            showError('No active session found. Please sign in.');
-            return;
-        }
-
-        try {
-            // Decode session token
-            const session = JSON.parse(atob(sessionToken));
-            console.log('🔓 Session decoded:', session);
-
-            // Check if session is expired
-            if (session.expires && Date.now() > session.expires) {
-                console.log('⏰ Session expired');
-                showError('Your session has expired. Please sign in again.');
-                sessionStorage.clear();
+            if (!sessionToken || !userDataString) {
+                console.log('❌ No session found, redirecting to login');
+                showError('No active session found. Please sign in.');
                 return;
             }
 
-            // Parse user data
-            const userData = JSON.parse(userDataString);
-            console.log('👤 User data:', userData);
+            try {
+                // Decode session token
+                const session = JSON.parse(atob(sessionToken));
+                console.log('🔓 Session decoded:', session);
 
-            // Populate page with user data
-            populateUserData(userData, session);
+                // Check if session is expired
+                if (session.expires && Date.now() > session.expires) {
+                    console.log('⏰ Session expired');
+                    showError('Your session has expired. Please sign in again.');
+                    sessionStorage.clear();
+                    return;
+                }
 
-        } catch (error) {
-            console.error('❌ Error loading session:', error);
-            showError('Invalid session data. Please sign in again.');
-            sessionStorage.clear();
-        }
+                // Parse user data
+                const userData = JSON.parse(userDataString);
+                console.log('👤 User data:', userData);
+
+                // Populate page with user data
+                populateUserData(userData, session);
+
+            } catch (error) {
+                console.error('❌ Error loading session:', error);
+                showError('Invalid session data. Please sign in again.');
+                sessionStorage.clear();
+            }
+        })();
 
         function populateUserData(userData, session) {
             // Header user info
@@ -284,8 +287,16 @@
                 document.getElementById('userOrganization').textContent =
                     userData.csc?.organization || 'Campus Stores Canada';
 
+                const avatarImg = document.getElementById('userAvatar');
                 if (userData.circle.avatar_url) {
-                    document.getElementById('userAvatar').src = userData.circle.avatar_url;
+                    avatarImg.src = userData.circle.avatar_url;
+                    avatarImg.onerror = function() {
+                        // Fallback to initials-based avatar
+                        this.style.display = 'none';
+                    };
+                } else {
+                    // No avatar - hide the image
+                    avatarImg.style.display = 'none';
                 }
             }
 
