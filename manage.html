@@ -2425,34 +2425,56 @@
         // INITIALIZATION
         // ===========================================
         document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            if (urlParams.get('success') === 'true') {
-                console.log('🎉 OAuth callback success!');
-                showSuccessState();
-                return;
-            }
-            
-            if (urlParams.get('error')) {
-                const error = urlParams.get('error');
-                console.error('❌ OAuth callback error:', error);
-                showErrorState(getErrorMessage(error));
-                return;
-            }
-            
-            const token = urlParams.get('token');
-            if (!token) {
-                showErrorState('Invalid access link. Please check your email for the correct URL.');
+            console.log('🚀 Institution Management - Initializing...');
+
+            // Check for session token from Circle.so auth
+            const sessionToken = sessionStorage.getItem('csc_session_token');
+            const userDataString = sessionStorage.getItem('csc_user_data');
+
+            if (!sessionToken || !userDataString) {
+                console.log('❌ No session found, redirecting to login');
+                showErrorState('Please sign in to access this page.');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
                 return;
             }
 
             try {
-                console.log('🪄 Loading organization data for token:', token);
-                await loadOrganizationData(token);
+                // Decode session token
+                const session = JSON.parse(atob(sessionToken));
+
+                // Check if session is expired
+                if (session.expires && Date.now() > session.expires) {
+                    console.log('⏰ Session expired');
+                    sessionStorage.clear();
+                    showErrorState('Your session has expired. Please sign in again.');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                    return;
+                }
+
+                const userData = JSON.parse(userDataString);
+
+                console.log('✅ Session valid:', {
+                    user: userData.csc.contact_name,
+                    org: userData.csc.organization,
+                    role: userData.csc.role
+                });
+
+                // Store globally for API calls
+                window.sessionToken = sessionToken;
+                window.userData = userData;
+                window.userRole = userData.csc.role; // 'primary' or 'member'
+
+                // Load organization and team data
+                await loadOrganizationData();
                 initializeDropdown();
                 showWelcomeScreen();
+
             } catch (error) {
-                console.error('Error loading organization data:', error);
+                console.error('❌ Error initializing:', error);
                 showErrorState('Unable to load your profile information. Please try again later.');
             }
         });
@@ -3642,12 +3664,17 @@
         // ===========================================
         // DATA LOADING
         // ===========================================
-        async function loadOrganizationData(token) {
+        async function loadOrganizationData() {
             showLoadingState();
 
             try {
                 console.log('📡 Fetching organization data...');
-                const response = await fetch(`${API_BASE}/get-organization?token=${token}`);
+                const response = await fetch(`${API_BASE}/get-organization`, {
+                    headers: {
+                        'Authorization': `Bearer ${window.sessionToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -3656,15 +3683,8 @@
                 organizationData = await response.json();
                 console.log('✅ Organization data loaded:', organizationData);
 
-                // Check if organization already has 25/26 Partner tag
-                if (organizationData.hasPartnerTag) {
-                    console.log('🛑 Organization already renewed - showing overlay');
-                    showAlreadyRenewedOverlay(organizationData.organization.name);
-                    return; // Stop the normal flow
-                }
-
                 populateForm(organizationData);
-                await loadOrganizationContacts(token);
+                await loadOrganizationContacts();
 
             } catch (error) {
                 console.error('💥 Failed to load organization data:', error);
@@ -3691,16 +3711,21 @@
             }
         }
 
-        async function loadOrganizationContacts(token) {
+        async function loadOrganizationContacts() {
             console.log('👥 Loading organization contacts...');
-            
+
             try {
-                const response = await fetch(`${API_BASE}/get-organization-contacts?token=${token}`);
-                
+                const response = await fetch(`${API_BASE}/get-organization-contacts`, {
+                    headers: {
+                        'Authorization': `Bearer ${window.sessionToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
                 const data = await response.json();
                 organizationContacts = data.contacts;
 
