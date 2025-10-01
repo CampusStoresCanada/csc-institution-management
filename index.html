@@ -266,7 +266,11 @@
 
     <script>
         // Circle.so Access
+        console.log('🔧 Main page loaded, setting up Circle button');
+
         document.getElementById('circleAccessBtn').addEventListener('click', function() {
+            console.log('🔵 Circle button clicked!');
+            console.log('🧭 Attempting redirect to /circle-verify');
             // Redirect to Circle verification form
             window.location.href = '/circle-verify';
         });
