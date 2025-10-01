@@ -4026,11 +4026,24 @@
         function populateContactList() {
             const teamList = document.getElementById('teamList');
             const teamListWrapper = document.querySelector('.team-list-wrapper');
-            if (!teamList || !teamListWrapper || !organizationContacts) return;
-            
+
+            console.log('🔍 populateContactList called');
+            console.log('📋 organizationContacts:', organizationContacts);
+            console.log('📋 organizationContacts length:', organizationContacts?.length);
+
+            if (!teamList || !teamListWrapper || !organizationContacts) {
+                console.warn('⚠️ Missing required elements or data:', {
+                    teamList: !!teamList,
+                    teamListWrapper: !!teamListWrapper,
+                    organizationContacts: !!organizationContacts,
+                    contactsLength: organizationContacts?.length
+                });
+                return;
+            }
+
             // Clear existing content
             teamList.innerHTML = '';
-            
+
             // Add header outside the scrolling area (if not already there)
             let existingHeader = teamListWrapper.querySelector('.contact-headers');
             if (!existingHeader) {
@@ -4044,20 +4057,22 @@
                 `;
                 teamListWrapper.insertBefore(headerDiv, teamList);
             }
-            
+
+            console.log('📝 Creating contact elements for', organizationContacts.length, 'contacts');
             organizationContacts.forEach((contact, index) => {
+                console.log(`  👤 Contact ${index}:`, {
+                    id: contact.id,
+                    name: contact.name,
+                    email: contact.email,
+                    phone: contact.phone,
+                    title: contact.title,
+                    isPrimary: contact.isPrimary
+                });
                 const contactElement = createContactElement(contact, index);
                 teamList.appendChild(contactElement);
             });
-            
-            // Force scrollbar update after content is added
-            setTimeout(() => {
-                if (window.updateScrollbar) {
-                    window.updateScrollbar();
-                }
-            }, 100);
-            
-            console.log(`👥 Populated ${organizationContacts.length} contacts`);
+
+            console.log(`✅ Populated ${organizationContacts.length} contacts into teamList`);
         }
         
         function createContactElement(contact, index) {
