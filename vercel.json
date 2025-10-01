@@ -7,6 +7,10 @@
       "destination": "/circle-check.html"
     },
     {
+      "source": "/circle-login-callback",
+      "destination": "/circle-login-callback.html"
+    },
+    {
       "source": "/circle-verify",
       "destination": "/circle-verify.html"
     },

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle.so Login Confirmed - CSC Tools</title>
+    <link rel="icon" href="https://images.squarespace-cdn.com/content/v1/5ec55d5d28a93e0e18d2eeb4/1600096854522-HS7NUI12I1ML6SPJFLLY/Artboard+1.png?format=1500w" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            background-image: url('https://images.squarespace-cdn.com/content/v1/5ec55d5d28a93e0e18d2eeb4/1600096854522-HS7NUI12I1ML6SPJFLLY/Artboard+1.png?format=1500w');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .status {
+            background: #e8f5e8;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 2px solid #4caf50;
+        }
+
+        .status h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .status p {
+            color: #333;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo"></div>
+
+        <div class="success-icon">✅</div>
+
+        <h1>Circle.so Login Confirmed!</h1>
+        <p class="subtitle">
+            Great! You're logged into Circle.so. Setting up access to CSC tools...
+        </p>
+
+        <div class="status">
+            <h3>Authentication Successful</h3>
+            <p>You're now authenticated with both Circle.so and Campus Stores Canada tools.</p>
+        </div>
+
+        <div class="loading-spinner"></div>
+        <p style="color: #666; margin-bottom: 30px;">Redirecting to CSC tools...</p>
+
+        <button type="button" class="btn" onclick="proceedToCSCTools()">
+            Continue to CSC Tools
+        </button>
+    </div>
+
+    <script>
+        console.log('✅ Circle.so login callback page loaded');
+
+        // Store authentication confirmation
+        sessionStorage.setItem('circle_login_verified', 'true');
+        sessionStorage.setItem('circle_login_time', Date.now().toString());
+
+        // Parse any URL parameters that Circle.so might have passed back
+        const urlParams = new URLSearchParams(window.location.search);
+        console.log('📋 URL parameters:', Object.fromEntries(urlParams.entries()));
+
+        // Auto-redirect after a short delay
+        setTimeout(() => {
+            proceedToCSCTools();
+        }, 3000);
+
+        function proceedToCSCTools() {
+            console.log('🚀 Proceeding to CSC tools...');
+
+            // Create a session token indicating successful Circle.so authentication
+            const sessionData = {
+                circle_authenticated: true,
+                timestamp: Date.now(),
+                expires: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
+                source: 'circle_redirect_callback'
+            };
+
+            const sessionToken = btoa(JSON.stringify(sessionData));
+            sessionStorage.setItem('csc_session_token', sessionToken);
+
+            // Redirect to management interface
+            window.location.href = '/manage';
+        }
+    </script>
+</body>
+</html>

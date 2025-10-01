@@ -266,93 +266,21 @@
         async function checkCircleLoginStatus() {
             console.log('🔐 Starting Circle.so login check...');
 
-            try {
-                // Method 1: Try to check via iframe or cross-origin request
-                // This approach checks if user can access Circle.so authenticated endpoints
+            // Since we can't directly check due to CORS/security, let's use a different approach:
+            // Redirect to Circle.so with a return URL that confirms login status
 
-                // Create a hidden iframe to check Circle.so login
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.src = 'https://app.circle.so/api/headless/v1/me';
-                document.body.appendChild(iframe);
+            const returnUrl = encodeURIComponent(window.location.origin + '/circle-login-callback');
+            const circleCheckUrl = `https://community.campusstores.ca/login?return_to=${returnUrl}`;
 
-                // Set a timeout for the check
-                const timeout = setTimeout(() => {
-                    console.log('⏰ Login check timed out - assuming not logged in');
-                    showNotLoggedInState();
-                }, 5000);
+            console.log('🧭 Redirecting to Circle.so for login check:', circleCheckUrl);
 
-                // Listen for iframe load events
-                iframe.onload = function() {
-                    clearTimeout(timeout);
-                    console.log('📡 Circle.so iframe loaded');
+            // Instead of direct detection, redirect to Circle.so
+            // If they're logged in, they'll be redirected back immediately
+            // If not, they'll see the login screen
 
-                    try {
-                        // Try to access iframe content (will fail if cross-origin)
-                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-
-                        if (iframeDoc) {
-                            console.log('✅ Can access Circle.so content - likely logged in');
-                            // Parse response if possible
-                            const responseText = iframeDoc.body.textContent;
-
-                            if (responseText && responseText.includes('member')) {
-                                const userData = JSON.parse(responseText);
-                                showLoggedInState(userData.member);
-                            } else {
-                                showLoggedInState(null);
-                            }
-                        } else {
-                            console.log('❌ Cannot access iframe content - cross-origin restriction');
-                            // Fall back to different method
-                            checkViaFetch();
-                        }
-                    } catch (error) {
-                        console.log('❌ Cross-origin access blocked:', error);
-                        // Fall back to different method
-                        checkViaFetch();
-                    }
-
-                    document.body.removeChild(iframe);
-                };
-
-                iframe.onerror = function() {
-                    clearTimeout(timeout);
-                    console.log('❌ Circle.so iframe failed to load');
-                    showNotLoggedInState();
-                    document.body.removeChild(iframe);
-                };
-
-            } catch (error) {
-                console.error('❌ Login check failed:', error);
-                showErrorState('Failed to check login status: ' + error.message);
-            }
-        }
-
-        async function checkViaFetch() {
-            console.log('🌐 Trying fetch method for login check...');
-
-            try {
-                // This will likely fail due to CORS, but worth trying
-                const response = await fetch('https://app.circle.so/api/headless/v1/me', {
-                    method: 'GET',
-                    credentials: 'include', // Include cookies
-                    mode: 'cors'
-                });
-
-                if (response.ok) {
-                    const userData = await response.json();
-                    console.log('✅ Fetch method successful:', userData);
-                    showLoggedInState(userData.member);
-                } else {
-                    console.log('❌ Fetch method failed:', response.status);
-                    showNotLoggedInState();
-                }
-            } catch (error) {
-                console.log('❌ Fetch method blocked (CORS):', error);
-                // If we can't check, assume not logged in
-                showNotLoggedInState();
-            }
+            setTimeout(() => {
+                window.location.href = circleCheckUrl;
+            }, 2000); // Give user a moment to see the loading screen
         }
 
         function showLoggedInState(userData = null) {
