@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Organization - CSC Tools</title>
+    <link rel="icon" href="https://images.squarespace-cdn.com/content/v1/5ec55d5d28a93e0e18d2eeb4/1600096854522-HS7NUI12I1ML6SPJFLLY/Artboard+1.png?format=1500w" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+        }
+
+        .user-details h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .user-details p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background-image: url('https://images.squarespace-cdn.com/content/v1/5ec55d5d28a93e0e18d2eeb4/1600096854522-HS7NUI12I1ML6SPJFLLY/Artboard+1.png?format=1500w');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .info-card h3 {
+            color: #667eea;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .info-card p {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn.secondary {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn.secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-section">
+                <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
+                <div class="user-details">
+                    <h2 id="userName">Loading...</h2>
+                    <p id="userOrganization">...</p>
+                </div>
+            </div>
+            <div class="logo"></div>
+        </div>
+
+        <div id="loadingState" class="content-card">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading your organization data...</p>
+            </div>
+        </div>
+
+        <div id="errorState" class="content-card hidden">
+            <div class="error">
+                <h2>Authentication Required</h2>
+                <p id="errorMessage">Please sign in to access this page.</p>
+                <br>
+                <a href="/" class="btn">Back to Sign In</a>
+            </div>
+        </div>
+
+        <div id="contentState" class="content-card hidden">
+            <h1>Organization Management</h1>
+            <p class="subtitle">Manage your institution's information and team members</p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>Organization</h3>
+                    <p id="orgName">-</p>
+                </div>
+                <div class="info-card">
+                    <h3>Your Role</h3>
+                    <p id="userRole">-</p>
+                </div>
+                <div class="info-card">
+                    <h3>Work Email</h3>
+                    <p id="workEmail">-</p>
+                </div>
+                <div class="info-card">
+                    <h3>Circle.so Member</h3>
+                    <p id="circleMember">✓ Verified</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button class="btn" onclick="alert('Organization editing coming soon!')">
+                    Edit Organization Details
+                </button>
+                <button class="btn secondary" onclick="alert('Team management coming soon!')">
+                    Manage Team Members
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('📄 Manage page loaded');
+
+        // Initialize page
+        (function initializePage() {
+            // Check for session token
+            const sessionToken = sessionStorage.getItem('csc_session_token');
+            const userDataString = sessionStorage.getItem('csc_user_data');
+
+            if (!sessionToken || !userDataString) {
+                console.log('❌ No session found, redirecting to login');
+                showError('No active session found. Please sign in.');
+                return;
+            }
+
+            try {
+                // Decode session token
+                const session = JSON.parse(atob(sessionToken));
+                console.log('🔓 Session decoded:', session);
+
+                // Check if session is expired
+                if (session.expires && Date.now() > session.expires) {
+                    console.log('⏰ Session expired');
+                    showError('Your session has expired. Please sign in again.');
+                    sessionStorage.clear();
+                    return;
+                }
+
+                // Parse user data
+                const userData = JSON.parse(userDataString);
+                console.log('👤 User data:', userData);
+
+                // Populate page with user data
+                populateUserData(userData, session);
+
+            } catch (error) {
+                console.error('❌ Error loading session:', error);
+                showError('Invalid session data. Please sign in again.');
+                sessionStorage.clear();
+            }
+        })();
+
+        function populateUserData(userData, session) {
+            // Header user info
+            if (userData.circle) {
+                document.getElementById('userName').textContent = userData.circle.name || 'CSC Member';
+                document.getElementById('userOrganization').textContent =
+                    userData.csc?.organization || 'Campus Stores Canada';
+
+                const avatarImg = document.getElementById('userAvatar');
+                if (userData.circle.avatar_url) {
+                    avatarImg.src = userData.circle.avatar_url;
+                    avatarImg.onerror = function() {
+                        // Fallback to initials-based avatar
+                        this.style.display = 'none';
+                    };
+                } else {
+                    // No avatar - hide the image
+                    avatarImg.style.display = 'none';
+                }
+            }
+
+            // Organization details
+            if (userData.csc) {
+                document.getElementById('orgName').textContent = userData.csc.organization || '-';
+                document.getElementById('userRole').textContent =
+                    userData.csc.role === 'primary' ? 'Primary Contact' : 'Team Member';
+                document.getElementById('workEmail').textContent = userData.csc.work_email || '-';
+            }
+
+            // Show content
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('contentState').classList.remove('hidden');
+
+            console.log('✅ Page populated successfully');
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('contentState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
