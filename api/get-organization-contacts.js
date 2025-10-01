@@ -33,17 +33,22 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('🔍 Step 1: Decoding session token...');
     // Decode and validate session token
     const session = JSON.parse(Buffer.from(sessionToken, 'base64').toString());
+    console.log('✅ Session decoded successfully');
 
     // Check if session is expired
     if (session.expires && Date.now() > session.expires) {
+      console.log('⏰ Session expired');
       res.status(401).json({ error: 'Session expired' });
       return;
     }
+    console.log('✅ Session is valid (not expired)');
 
     // Check if user has access to organization data
     if (!session.csc || !session.csc.organization_id) {
+      console.log('❌ No organization in session:', session);
       res.status(403).json({ error: 'No organization associated with your account' });
       return;
     }
@@ -53,8 +58,11 @@ export default async function handler(req, res) {
     const currentUserId = session.csc.contact_id;
 
     console.log(`👥 Fetching team members for: ${session.csc.organization_name}`);
+    console.log(`📋 Organization ID: ${organizationId}`);
+    console.log(`👤 User Role: ${userRole}, Contact ID: ${currentUserId}`);
 
     // Query Notion for all contacts related to this organization
+    console.log('🔍 Step 2: Querying Notion contacts database...');
     const contactsResponse = await fetch(`https://api.notion.com/v1/databases/${contactsDbId}/query`, {
       method: 'POST',
       headers: {
@@ -83,50 +91,72 @@ export default async function handler(req, res) {
     });
 
     if (!contactsResponse.ok) {
-      throw new Error(`Notion API error: ${contactsResponse.status}`);
+      const errorText = await contactsResponse.text();
+      console.error('❌ Notion API error:', contactsResponse.status, errorText);
+      throw new Error(`Notion API error: ${contactsResponse.status} - ${errorText}`);
     }
 
+    console.log('✅ Notion query successful');
     const contactsData = await contactsResponse.json();
+    console.log(`📊 Found ${contactsData.results.length} contacts in Notion`);
 
     // Map contacts to team member format with permissions
-    const teamMembers = contactsData.results.map(contact => {
-      const isPrimary = contact.properties['Primary Contact']?.checkbox || false;
-      const contactId = contact.id;
-      const isCurrentUser = contactId === currentUserId;
+    console.log('🔍 Step 3: Mapping contacts to team member format...');
+    const teamMembers = contactsData.results.map((contact, index) => {
+      try {
+        const isPrimary = contact.properties['Primary Contact']?.checkbox || false;
+        const contactId = contact.id;
+        const isCurrentUser = contactId === currentUserId;
 
-      // Determine edit permissions
-      // Primary contact can edit anyone
-      // Regular members can only edit themselves
-      const canEdit = userRole === 'primary' || isCurrentUser;
+        // Determine edit permissions
+        // Primary contact can edit anyone
+        // Regular members can only edit themselves
+        const canEdit = userRole === 'primary' || isCurrentUser;
 
-      // Only primary contact can change who is primary
-      const canChangePrimary = userRole === 'primary' && !isPrimary;
+        // Only primary contact can change who is primary
+        const canChangePrimary = userRole === 'primary' && !isPrimary;
 
-      return {
-        id: contactId,
-        name: contact.properties.Name?.title?.[0]?.text?.content || '',
-        email: contact.properties['Work Email']?.email || '',
-        phone: contact.properties['Work Phone']?.phone_number || '',
-        title: contact.properties.Title?.rich_text?.[0]?.text?.content || '',
-        isPrimary: isPrimary,
-        isCurrentUser: isCurrentUser,
-        canEdit: canEdit,
-        canChangePrimary: canChangePrimary
-      };
+        const member = {
+          id: contactId,
+          name: contact.properties.Name?.title?.[0]?.text?.content || '',
+          email: contact.properties['Work Email']?.email || '',
+          phone: contact.properties['Work Phone']?.phone_number || '',
+          title: contact.properties.Title?.rich_text?.[0]?.text?.content || '',
+          isPrimary: isPrimary,
+          isCurrentUser: isCurrentUser,
+          canEdit: canEdit,
+          canChangePrimary: canChangePrimary
+        };
+
+        console.log(`  ✅ Contact ${index + 1}: ${member.name} (${member.email})`);
+        return member;
+      } catch (mapError) {
+        console.error(`❌ Error mapping contact ${index}:`, mapError, contact);
+        throw mapError;
+      }
     });
 
-    console.log(`✅ Found ${teamMembers.length} team members`);
+    console.log(`✅ Successfully mapped ${teamMembers.length} team members`);
 
-    res.status(200).json({
+    console.log('🔍 Step 4: Sending response...');
+    const responseData = {
       contacts: teamMembers, // Frontend expects 'contacts'
       teamMembers: teamMembers, // Also provide as teamMembers for compatibility
       organizationName: session.csc.organization_name,
       userRole,
       currentUserId
+    };
+    console.log('✅ Response prepared:', {
+      contactCount: teamMembers.length,
+      organizationName: session.csc.organization_name,
+      userRole,
+      currentUserId
     });
+    res.status(200).json(responseData);
 
   } catch (error) {
     console.error('❌ Error fetching team members:', error);
-    res.status(500).json({ error: 'Failed to load team members', details: error.message });
+    console.error('❌ Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to load team members', details: error.message, stack: error.stack });
   }
 }
