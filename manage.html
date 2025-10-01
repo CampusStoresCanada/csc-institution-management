@@ -341,6 +341,59 @@
                                 </svg>
                             </button>
                         </div>
+
+                        <!-- Divider -->
+                        <div style="border-top: 2px solid #eee; margin: 40px 0 30px 0;"></div>
+
+                        <!-- Section Header: Your Contact Information -->
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="color: #333; font-size: 18px; font-weight: 600; margin-bottom: 8px;">Your Contact Information</h3>
+                            <p style="color: #666; font-size: 14px;">This information is always editable by you.</p>
+                        </div>
+
+                        <!-- User Name Field -->
+                        <div class="form-field" data-field="userName">
+                            <div class="field-display" id="userNameDisplay">Loading...</div>
+                            <button class="edit-btn" onclick="editField('userName')" id="editUserName">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m18 2 4 4-14 14H4v-4L18 2z"/>
+                                    <path d="m14.5 5.5 4 4"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- User Email Field -->
+                        <div class="form-field" data-field="userEmail">
+                            <div class="field-display" id="userEmailDisplay">Loading...</div>
+                            <button class="edit-btn" onclick="editField('userEmail')" id="editUserEmail">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m18 2 4 4-14 14H4v-4L18 2z"/>
+                                    <path d="m14.5 5.5 4 4"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- User Phone Field -->
+                        <div class="form-field" data-field="userPhone">
+                            <div class="field-display" id="userPhoneDisplay">Phone number</div>
+                            <button class="edit-btn" onclick="editField('userPhone')" id="editUserPhone">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m18 2 4 4-14 14H4v-4L18 2z"/>
+                                    <path d="m14.5 5.5 4 4"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- User Title Field -->
+                        <div class="form-field" data-field="userTitle">
+                            <div class="field-display" id="userTitleDisplay">Job title</div>
+                            <button class="edit-btn" onclick="editField('userTitle')" id="editUserTitle">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m18 2 4 4-14 14H4v-4L18 2z"/>
+                                    <path d="m14.5 5.5 4 4"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Navigation Buttons -->
@@ -3528,11 +3581,14 @@
                 console.log(`🏛️ ${data.boardMembersFound || 0} board members found`);
                 console.log(`🎪 ${data.conferenceDelegatesFound || 0} existing conference delegates found`);
 
+                // Update user contact information with phone and title from loaded contacts
+                populateUserContactInfo();
+
                 // Pre-populate conference attendees from existing delegates
                 if (organizationContacts.length > 0) {
                     prePopulateConferenceAttendees();
                 }
-                
+
             } catch (error) {
                 console.error('💥 Error loading contacts:', error);
             }
@@ -3638,9 +3694,49 @@
             // Populate dropdowns and set current values
             populateInstitutionSizeDropdown(data.institutionSizeOptions, formState.institutionSize);
 
+            // Populate user contact information from session userData
+            populateUserContactInfo();
+
             window.formData = {
                 organization: data.organization
             };
+        }
+
+        function populateUserContactInfo() {
+            console.log('👤 Populating user contact information...');
+
+            if (!window.userData || !window.userData.csc) {
+                console.warn('⚠️ No user data available');
+                return;
+            }
+
+            const user = window.userData.csc;
+
+            // Find current user in loaded contacts to get phone and title
+            let currentUserContact = null;
+            if (organizationContacts && organizationContacts.length > 0) {
+                currentUserContact = organizationContacts.find(c => c.isCurrentUser);
+            }
+
+            // Populate user fields
+            const userName = user.contact_name || window.userData.circle?.name || '';
+            const userEmail = user.work_email || window.userData.circle?.email || '';
+            const userPhone = currentUserContact?.phone || '';
+            const userTitle = currentUserContact?.title || '';
+
+            // Update displays
+            updateFieldDisplay('userName', userName);
+            updateFieldDisplay('userEmail', userEmail);
+            updateFieldDisplay('userPhone', userPhone || 'Phone number');
+            updateFieldDisplay('userTitle', userTitle || 'Job title');
+
+            // Store in formState
+            formState.userName = userName;
+            formState.userEmail = userEmail;
+            formState.userPhone = userPhone;
+            formState.userTitle = userTitle;
+
+            console.log('✅ User contact info populated:', { userName, userEmail, userPhone, userTitle });
         }
 
         function populateInstitutionSizeDropdown(options, currentValue) {
