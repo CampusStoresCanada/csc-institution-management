@@ -1,8 +1,8 @@
-// api/get-organization.js - Get organization data for membership renewal
+// api/get-organization.js - Get organization data with session authentication
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -14,16 +14,17 @@ export default async function handler(req, res) {
     return;
   }
 
-  const token = req.query.token;
-
-  if (!token) {
-    res.status(400).json({ error: 'Token is required' });
+  // Get session token from Authorization header
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'No session token provided' });
     return;
   }
 
+  const sessionToken = authHeader.substring(7); // Remove 'Bearer '
+
   const notionToken = process.env.NOTION_TOKEN;
   const organizationsDbId = process.env.NOTION_ORGANIZATIONS_DB_ID;
-  const tagSystemDbId = process.env.NOTION_TAG_SYSTEM_DB_ID;
 
   if (!notionToken || !organizationsDbId) {
     console.error('❌ Missing environment variables!');
@@ -32,98 +33,66 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Query Notion for organization with this token
-    const response = await fetch(`https://api.notion.com/v1/databases/${organizationsDbId}/query`, {
-      method: 'POST',
+    // Decode and validate session token
+    const session = JSON.parse(Buffer.from(sessionToken, 'base64').toString());
+
+    // Check if session is expired
+    if (session.expires && Date.now() > session.expires) {
+      res.status(401).json({ error: 'Session expired' });
+      return;
+    }
+
+    // Check if user has access to organization data
+    if (!session.csc || !session.csc.organization_id) {
+      res.status(403).json({ error: 'No organization associated with your account' });
+      return;
+    }
+
+    const organizationId = session.csc.organization_id;
+    const userRole = session.csc.role; // 'primary' or 'member'
+
+    console.log(`📋 Fetching organization data for: ${session.csc.organization_name}`);
+
+    // Fetch organization details from Notion
+    const orgResponse = await fetch(`https://api.notion.com/v1/pages/${organizationId}`, {
       headers: {
         'Authorization': `Bearer ${notionToken}`,
         'Content-Type': 'application/json',
         'Notion-Version': '2022-06-28'
-      },
-      body: JSON.stringify({
-        filter: {
-          property: 'Token',
-          rich_text: { equals: token }
-        }
-      })
+      }
     });
 
-    if (!response.ok) {
-      throw new Error(`Notion API error: ${response.status}`);
+    if (!orgResponse.ok) {
+      throw new Error(`Notion API error: ${orgResponse.status}`);
     }
 
-    const data = await response.json();
+    const org = await orgResponse.json();
 
-    if (data.results.length === 0) {
-      res.status(404).json({ error: 'Organization not found for token' });
-      return;
-    }
-
-    const org = data.results[0];
-
-    // Check if organization already has "25/26 Member" tag
-    let hasPartnerTag = false;
-    if (tagSystemDbId && org.properties['Tag']?.relation) {
-      try {
-
-        // Get the "25/26 Member" tag ID
-        const partnerTagResponse = await fetch(`https://api.notion.com/v1/databases/${tagSystemDbId}/query`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${notionToken}`,
-            'Content-Type': 'application/json',
-            'Notion-Version': '2022-06-28'
-          },
-          body: JSON.stringify({
-            filter: {
-              property: 'Name',
-              title: { equals: '25/26 Member' }
-            }
-          })
-        });
-
-        if (partnerTagResponse.ok) {
-          const partnerTagData = await partnerTagResponse.json();
-
-          if (partnerTagData.results.length > 0) {
-            const partnerTagId = partnerTagData.results[0].id;
-
-            // Check if organization has this tag
-            const orgTagIds = org.properties['Tag'].relation.map(tag => tag.id);
-            hasPartnerTag = orgTagIds.includes(partnerTagId);
-
-
-            if (hasPartnerTag) {
-              console.log(`🛑 Organization already renewed: ${org.properties.Organization?.title?.[0]?.text?.content}`);
-            }
-          }
-        }
-      } catch (tagError) {
-        console.error('⚠️ Error checking member tag:', tagError);
-        // Continue without tag check if there's an error
-      }
-    }
-
-    // Extract organization data (no booth number needed for membership renewal)
-    const institutionSize = org.properties['Institution Size']?.select?.name || '';
-    const streetAddress = org.properties['Street Address']?.rich_text?.[0]?.text?.content || '';
-    const city = org.properties['City']?.rich_text?.[0]?.text?.content || '';
-    const province = org.properties['Province']?.select?.name || '';
-    const postalCode = org.properties['Postal Code']?.rich_text?.[0]?.text?.content || '';
-
-    // Institution size options for dropdown
-    const institutionSizeLabels = {
-      'XSmall': 'XSmall (< 2,000 FTE)',
-      'Small': 'Small (2,001 - 5,000 FTE)',
-      'Medium': 'Medium (5,001 - 10,000 FTE)',
-      'Large': 'Large (10,001 - 15,000 FTE)',
-      'XLarge': 'XLarge (> 15,001 FTE)'
+    // Extract organization data
+    const organizationData = {
+      id: org.id,
+      name: org.properties.Organization?.title?.[0]?.text?.content || '',
+      website: org.properties.Website?.url || '',
+      institutionSize: org.properties['Institution Size']?.select?.name || '',
+      address: {
+        streetAddress: org.properties['Street Address']?.rich_text?.[0]?.text?.content || '',
+        city: org.properties['City']?.rich_text?.[0]?.text?.content || '',
+        province: org.properties['Province']?.select?.name || '',
+        postalCode: org.properties['Postal Code']?.rich_text?.[0]?.text?.content || ''
+      },
+      // User permissions
+      canEdit: userRole === 'primary',
+      userRole: userRole
     };
 
-    const institutionSizeOptions = Object.entries(institutionSizeLabels).map(([value, label]) => ({
-      value: value,
-      label: label
-    }));
+    // Institution size options for dropdown
+    const institutionSizeOptions = [
+      { value: 'XSmall', label: 'XSmall (< 2,000 FTE)' },
+      { value: 'Small', label: 'Small (2,001 - 5,000 FTE)' },
+      { value: 'Medium', label: 'Medium (5,001 - 10,000 FTE)' },
+      { value: 'Large', label: 'Large (10,001 - 15,000 FTE)' },
+      { value: 'XLarge', label: 'XLarge (> 15,001 FTE)' }
+    ];
 
     // Province options for dropdown
     const provinceOptions = [
@@ -143,28 +112,16 @@ export default async function handler(req, res) {
       { value: 'Out of Canada', label: 'Out of Canada' }
     ];
 
-    // Return clean organization data
-    const organizationData = {
-      organization: {
-        name: org.properties.Organization?.title?.[0]?.text?.content || '',
-        website: org.properties.Website?.url || '',
-        institutionSize: institutionSize,
-        address: {
-          streetAddress: streetAddress,
-          city: city,
-          province: province,
-          postalCode: postalCode
-        }
-      },
-      institutionSizeOptions: institutionSizeOptions,
-      provinceOptions: provinceOptions,
-      hasPartnerTag: hasPartnerTag
-    };
+    console.log(`✅ Organization data fetched successfully`);
 
-    res.status(200).json(organizationData);
+    res.status(200).json({
+      organization: organizationData,
+      institutionSizeOptions,
+      provinceOptions
+    });
 
   } catch (error) {
-    console.error('Error fetching organization data:', error);
+    console.error('❌ Error fetching organization data:', error);
     res.status(500).json({ error: 'Failed to load organization data', details: error.message });
   }
 }
