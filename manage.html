@@ -236,19 +236,18 @@
                 </div>
 
                 <div class="step-navigation">
-                    <div class="step-item" data-step="0">
+                    <div class="step-item active" data-step="1" onclick="switchTab(1)" style="cursor: pointer;">
                         <div class="step-number">
                             👤
                         </div>
                         <div class="step-title">My Profile</div>
                     </div>
-                    <div class="step-item" data-step="1">
+                    <div class="step-item" data-step="2" onclick="switchTab(2)" style="cursor: pointer;">
                         <div class="step-number">
                             👥
                         </div>
                         <div class="step-title">My Team</div>
                     </div>
-
                 </div>
             </div>
             <!-- Main Content -->
@@ -271,35 +270,9 @@
                     }
                 </style>
 
-                <!-- Mobile Progress Bar -->
-                <div class="mobile-progress">
-                    <div class="mobile-progress-fill" style="width: 0%"></div>
-                </div>
 
-                <!-- Welcome Screen -->
-                <div id="welcomeSection" class="content-section active">
-                    <div class="welcome-container">
-                        <div class="welcome-section">
-                            <h1 class="welcome-title">Welcome to CSC Membership Renewal!</h1>
-                            <p class="welcome-text">
-                                Thank you for renewing your Campus Stores Canada membership for the 2025-26 year.
-                            </p>
-                            <p class="welcome-text">
-                                We'll guide you through updating your institution information, managing your team contacts, setting up billing preferences, and completing your payment.
-                            </p>
-                            <p class="welcome-text">
-                                This process should take just a few minutes, and you can save your progress at any time. Let's get started!
-                            </p>
-                            <button class="get-started-btn" onclick="startWizard()">
-                                Get started <span>→</span>
-                            </button>
-                        </div>
-                        
-                    </div>
-                </div>
-
-                <!-- Step 1: Company Information -->
-                <div id="step1Section" class="content-section">
+                <!-- Step 1: Company Information (My Profile) -->
+                <div id="step1Section" class="content-section active">
                     <div class="step-header">
                         <h2 class="step-title-main">Institution Information</h2>
                         <p class="step-subtitle">Please verify and update your institution's membership details:</p>
@@ -414,16 +387,6 @@
                         </div>
 
                     </div>
-
-                    <!-- Navigation Buttons -->
-                    <button class="previous-btn" onclick="previousStep()">
-                        <span>←</span>
-                        Previous step
-                    </button>
-                    <button class="next-btn" onclick="nextStep()">
-                        Next step
-                        <span>→</span>
-                    </button>
                 </div>
 
                 <!-- Step 2: My Team -->
@@ -459,16 +422,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Navigation Buttons -->
-                    <button class="previous-btn" onclick="previousStep()">
-                        <span>←</span>
-                        Previous step
-                    </button>
-                    <button class="next-btn" onclick="nextStep()">
-                        Next step
-                        <span>→</span>
-                    </button>
                 </div>
                 <!-- Crop Modal -->
                 <div class="crop-modal" id="cropModal">
@@ -2336,50 +2289,40 @@
         });
 
         // ===========================================
-        // WIZARD NAVIGATION
+        // TAB NAVIGATION
         // ===========================================
-        function startWizard() {
-            currentStep = 1;
-            showStep(currentStep);
-            updateStepNavigation();
-            updateMobileProgress(); // If this function exists
-        }
-
-        function nextStep() {
-            if (activeField) {
-                saveField(activeField);
-                if (activeField) return;
-            }
-
-            if (!validateAllFields()) {
-                return;
-            }
-
-            // Special check for step 3 (Billing) - require invoice confirmation
-            if (currentStep === 3 && !window.invoiceConfirmed) {
-                openInvoiceModal();
-                return;
-            }
-
-            if (currentStep < totalSteps) {
-                currentStep++;
-                showStep(currentStep);
-                updateStepNavigation();
-                updateMobileProgress(); // If this function exists
-            }
-        }
-        
-        function previousStep() {
+        function switchTab(tabNumber) {
+            // Save any active field first
             if (activeField) {
                 saveField(activeField);
             }
-            
-            if (currentStep > 0) {
-                currentStep--;
-                showStep(currentStep);
-                updateStepNavigation();
-                updateMobileProgress(); // If this function exists
+
+            // Update active tab styling
+            document.querySelectorAll('.step-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.step-item[data-step="${tabNumber}"]`).classList.add('active');
+
+            // Show corresponding content section
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            if (tabNumber === 1) {
+                // My Profile tab
+                document.getElementById('step1Section').classList.add('active');
+            } else if (tabNumber === 2) {
+                // My Team tab
+                document.getElementById('step2Section').classList.add('active');
+
+                // Initialize My Team if not already done
+                if (!initializedSteps.has(2)) {
+                    initializeStep3();
+                    initializedSteps.add(2);
+                }
             }
+
+            currentStep = tabNumber;
         }
 
         function showStep(stepNumber) {
@@ -3402,28 +3345,6 @@
             }
         }
 
-        function updateStepNavigation() {
-            document.querySelectorAll('.step-item').forEach((item, index) => {
-                item.classList.remove('active', 'completed');
-                
-                if (currentStep > 0) {
-                    // Mark steps as completed if we've passed them
-                    if (index < currentStep - 1) {
-                        item.classList.add('completed');
-                    }
-                    // Mark current step as active
-                    else if (index === currentStep - 1) {
-                        item.classList.add('active');
-                    }
-                }
-            });
-        }
-
-        function updateMobileProgress() {
-            const progressFill = document.querySelector('.mobile-progress-fill');
-            const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100;
-            progressFill.style.width = `${Math.max(0, progressPercent)}%`;
-        }
 
         // ===========================================
         // STATE MANAGEMENT
