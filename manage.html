@@ -3739,11 +3739,6 @@
             // Populate user contact information from session userData
             populateUserContactInfo();
 
-            // Show Report Issue section for non-primary users
-            if (window.userRole === 'member') {
-                document.getElementById('reportIssueSection').style.display = 'block';
-            }
-
             window.formData = {
                 organization: data.organization
             };
