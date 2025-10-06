@@ -28,14 +28,12 @@ export default async function handler(req, res) {
 
   try {
     const { token, contactOperations } = req.body;
-    console.log('🔍 BACKEND DEBUG - Received contactOperations:', JSON.stringify(contactOperations, null, 2));
 
     if (!token) {
       res.status(400).json({ error: 'Token is required' });
       return;
     }
 
-    console.log('👥 Processing conference team operations for token:', token);
 
     // Step 1: Get organization info (we need the org ID for relations)
     const orgResponse = await fetch(`https://api.notion.com/v1/databases/${organizationsDbId}/query`, {
@@ -63,7 +61,6 @@ export default async function handler(req, res) {
     const organizationId = org.id;
     const organizationName = org.properties.Organization?.title?.[0]?.text?.content || '';
     
-    console.log(`🏢 Found organization: ${organizationName} (${organizationId})`);
 
     const results = {
       created: [],
@@ -74,7 +71,6 @@ export default async function handler(req, res) {
 
     // Step 2: Handle CREATE operations
     if (contactOperations.create && contactOperations.create.length > 0) {
-      console.log(`➕ Creating ${contactOperations.create.length} new contacts...`);
       
       for (const newContact of contactOperations.create) {
         try {
@@ -131,7 +127,6 @@ export default async function handler(req, res) {
               id: createdContact.id,
               name: newContact.name
             });
-            console.log(`✅ Created contact: ${newContact.name}`);
           } else {
             const errorData = await createResponse.json();
             results.errors.push(`Failed to create ${newContact.name}: ${errorData.message}`);
@@ -146,12 +141,8 @@ export default async function handler(req, res) {
 
     // Step 3: Handle UPDATE operations
     if (contactOperations.update && contactOperations.update.length > 0) {
-      console.log(`✏️ Updating ${contactOperations.update.length} contacts...`);
-      console.log(`📝 Update data received:`, JSON.stringify(contactOperations.update, null, 2));
       
       for (const updateContact of contactOperations.update) {
-        console.log(`🔄 Processing update for originalId: ${updateContact.originalId}`);
-        console.log(`📝 New name will be: "${updateContact.name}"`);
         
         try {
           const updateData = {
@@ -160,7 +151,6 @@ export default async function handler(req, res) {
     
           // Only include fields that are being updated
           if (updateContact.name) {
-            console.log(`📝 Setting Name property to: "${updateContact.name}"`);
             updateData.properties["Name"] = {
               title: [{ text: { content: updateContact.name } }]
             };
@@ -190,7 +180,6 @@ export default async function handler(req, res) {
             };
           }
 
-          console.log(`📤 Sending to Notion:`, JSON.stringify(updateData, null, 2));
     
           const updateResponse = await fetch(`https://api.notion.com/v1/pages/${updateContact.originalId}`, {
             method: 'PATCH',
@@ -202,11 +191,9 @@ export default async function handler(req, res) {
             body: JSON.stringify(updateData)
           });
     
-          console.log(`📡 Notion response status: ${updateResponse.status}`);
     
           if (updateResponse.ok) {
             const responseData = await updateResponse.json();
-            console.log(`✅ Successfully updated contact: ${updateContact.name}`);
             results.updated.push({
               id: updateContact.originalId,
               name: updateContact.name || 'Contact'
@@ -222,11 +209,9 @@ export default async function handler(req, res) {
         }
       }
     } else {
-      console.log(`⚠️ No updates to process. contactOperations.update length:`, contactOperations.update?.length || 0);
     }
     // Step 4: Handle DELETE operations (we'll mark as inactive rather than delete)
     if (contactOperations.delete && contactOperations.delete.length > 0) {
-      console.log(`🗑️ Marking ${contactOperations.delete.length} contacts as inactive...`);
       
       for (const contactId of contactOperations.delete) {
         try {
@@ -257,7 +242,6 @@ export default async function handler(req, res) {
 
           if (deleteResponse.ok) {
             results.deleted.push(contactId);
-            console.log(`✅ Marked contact as inactive: ${contactId}`);
           } else {
             const errorData = await deleteResponse.json();
             results.errors.push(`Failed to delete contact: ${errorData.message}`);
@@ -268,13 +252,9 @@ export default async function handler(req, res) {
       }
     }
     // DEBUG: Check if we reach the tagging section
-    console.log('🔍 DEBUG - About to check conference team tagging...');
-    console.log('🔍 DEBUG - contactOperations.conferenceTeam exists:', !!contactOperations.conferenceTeam);
-    console.log('🔍 DEBUG - contactOperations.conferenceTeam length:', contactOperations.conferenceTeam?.length);
 
     // Step 5: Handle conference team tagging
     if (contactOperations.conferenceTeam) {
-      console.log(`🏷️ Processing conference team tagging...`);
       
       // First, we need to get the tag IDs from the Tag System database
       const tagSystemDbId = process.env.NOTION_TAG_SYSTEM_DB_ID || '1f9a69bf0cfd8034b919f51b7c4f2c67';
@@ -303,7 +283,6 @@ export default async function handler(req, res) {
           const tagData = await tagResponse.json();
           if (tagData.results.length > 0) {
             tagIds[tagName] = tagData.results[0].id;
-            console.log(`🏷️ Found tag "${tagName}": ${tagIds[tagName]}`);
           } else {
             console.error(`❌ Tag "${tagName}" not found in Tag System database`);
           }
@@ -375,7 +354,6 @@ export default async function handler(req, res) {
           if (updateResponse.ok) {
             const attendingStatus = teamMember.attending ? 'ATTENDING' : 'NOT ATTENDING';
             const roleStatus = teamMember.isPrimary ? 'PRIMARY CONTACT' : 'SECONDARY CONTACT';
-            console.log(`✅ Updated ${teamMember.id}: ${attendingStatus}, ${roleStatus}`);
           } else {
             const errorData = await updateResponse.json();
             console.error(`❌ Failed to update tags for ${teamMember.id}:`, errorData);
@@ -390,11 +368,6 @@ export default async function handler(req, res) {
     }
 
     // Step 6: Return results
-    console.log('🎉 Conference team operations complete!');
-    console.log(`- Created: ${results.created.length}`);
-    console.log(`- Updated: ${results.updated.length}`);
-    console.log(`- Deleted: ${results.deleted.length}`);
-    console.log(`- Errors: ${results.errors.length}`);
 
     res.status(200).json({
       success: true,

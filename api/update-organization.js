@@ -51,8 +51,6 @@ export default async function handler(req, res) {
     const organizationId = session.csc.organization_id;
     const organizationName = session.csc.organization_name;
 
-    console.log('🏢 Processing organization updates for:', organizationName);
-    console.log('📝 Updates to apply:', JSON.stringify(organizationUpdates, null, 2));
 
     // Step 2: Build update payload
     const updateData = {
@@ -64,7 +62,6 @@ export default async function handler(req, res) {
       updateData.properties["Organization"] = {
         title: [{ text: { content: organizationUpdates.institutionName } }]
       };
-      console.log(`📝 Updating name: ${organizationName} → ${organizationUpdates.institutionName}`);
     }
 
     // Update website
@@ -72,7 +69,6 @@ export default async function handler(req, res) {
       updateData.properties["Website"] = {
         url: organizationUpdates.website
       };
-      console.log(`🌐 Updating website: ${organizationUpdates.website}`);
     }
 
     // Update institution size
@@ -80,7 +76,6 @@ export default async function handler(req, res) {
       updateData.properties["Institution Size"] = {
         select: { name: organizationUpdates.institutionSize }
       };
-      console.log(`📊 Updating institution size: ${organizationUpdates.institutionSize}`);
     }
 
     // Update address fields
@@ -111,12 +106,10 @@ export default async function handler(req, res) {
         };
       }
 
-      console.log(`🏠 Updating address: ${address.streetAddress}, ${address.city}, ${address.province} ${address.postalCode}`);
     }
 
     // Step 3: Apply updates to Notion
     if (Object.keys(updateData.properties).length === 0) {
-      console.log('ℹ️ No updates to apply');
       res.status(200).json({
         success: true,
         message: 'No changes detected',
@@ -125,7 +118,6 @@ export default async function handler(req, res) {
       return;
     }
 
-    console.log('📤 Sending updates to Notion:', JSON.stringify(updateData, null, 2));
 
     const updateResponse = await fetch(`https://api.notion.com/v1/pages/${organizationId}`, {
       method: 'PATCH',
@@ -144,7 +136,6 @@ export default async function handler(req, res) {
     }
 
     const updatedOrg = await updateResponse.json();
-    console.log('✅ Organization updated successfully in Notion');
 
     res.status(200).json({
       success: true,

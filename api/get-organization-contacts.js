@@ -34,22 +34,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('🔍 Step 1: Decoding session token...');
     // Decode and validate session token
     const session = JSON.parse(Buffer.from(sessionToken, 'base64').toString());
-    console.log('✅ Session decoded successfully');
 
     // Check if session is expired
     if (session.expires && Date.now() > session.expires) {
-      console.log('⏰ Session expired');
       res.status(401).json({ error: 'Session expired' });
       return;
     }
-    console.log('✅ Session is valid (not expired)');
 
     // Check if user has access to organization data
     if (!session.csc || !session.csc.organization_id) {
-      console.log('❌ No organization in session:', session);
       res.status(403).json({ error: 'No organization associated with your account' });
       return;
     }
@@ -58,12 +53,8 @@ export default async function handler(req, res) {
     const userRole = session.csc.role; // 'primary' or 'member'
     const currentUserId = session.csc.contact_id;
 
-    console.log(`👥 Fetching team members for: ${session.csc.organization_name}`);
-    console.log(`📋 Organization ID: ${organizationId}`);
-    console.log(`👤 User Role: ${userRole}, Contact ID: ${currentUserId}`);
 
     // Step 2: Get special tag IDs from Tag System
-    console.log('🏷️ Step 2: Looking up special tags...');
     let primaryContactTagId = null;
     let conferenceDelegateTagId = null;
 
@@ -88,7 +79,6 @@ export default async function handler(req, res) {
         const primaryTagData = await primaryTagResponse.json();
         if (primaryTagData.results.length > 0) {
           primaryContactTagId = primaryTagData.results[0].id;
-          console.log('✅ Primary Contact tag ID:', primaryContactTagId);
         } else {
           console.warn('⚠️ Primary Contact tag not found in Tag System');
         }
@@ -114,7 +104,6 @@ export default async function handler(req, res) {
         const conferenceTagData = await conferenceTagResponse.json();
         if (conferenceTagData.results.length > 0) {
           conferenceDelegateTagId = conferenceTagData.results[0].id;
-          console.log('✅ Conference Delegate tag ID:', conferenceDelegateTagId);
         } else {
           console.warn('⚠️ Conference Delegate tag not found in Tag System');
         }
@@ -124,7 +113,6 @@ export default async function handler(req, res) {
     }
 
     // Query Notion for all contacts related to this organization
-    console.log('🔍 Step 3: Querying Notion contacts database...');
     const contactsResponse = await fetch(`https://api.notion.com/v1/databases/${contactsDbId}/query`, {
       method: 'POST',
       headers: {
@@ -154,16 +142,12 @@ export default async function handler(req, res) {
       throw new Error(`Notion API error: ${contactsResponse.status} - ${errorText}`);
     }
 
-    console.log('✅ Notion query successful');
     const contactsData = await contactsResponse.json();
-    console.log(`📊 Found ${contactsData.results.length} contacts in Notion`);
 
     // Map contacts to team member format with permissions
-    console.log('🔍 Step 3: Mapping contacts to team member format...');
 
     // Log all available properties from first contact to debug
     if (contactsData.results.length > 0) {
-      console.log('🔍 Available properties in first contact:', Object.keys(contactsData.results[0].properties));
     }
 
     const teamMembers = contactsData.results.map((contact, index) => {
@@ -178,13 +162,11 @@ export default async function handler(req, res) {
           // Check for Primary Contact tag
           if (primaryContactTagId && personalTagIds.includes(primaryContactTagId)) {
             isPrimary = true;
-            console.log(`👑 Found primary contact: ${contact.properties.Name?.title?.[0]?.text?.content}`);
           }
 
           // Check for Conference Delegate tag
           if (conferenceDelegateTagId && personalTagIds.includes(conferenceDelegateTagId)) {
             isConferenceDelegate = true;
-            console.log(`🎪 Found conference delegate: ${contact.properties.Name?.title?.[0]?.text?.content}`);
           }
         }
 
@@ -212,7 +194,6 @@ export default async function handler(req, res) {
           canChangePrimary: canChangePrimary
         };
 
-        console.log(`  ✅ Contact ${index + 1}: ${member.name} (${member.email}) - Phone: "${member.phone}", Title: "${member.title}", Primary: ${isPrimary}`);
         return member;
       } catch (mapError) {
         console.error(`❌ Error mapping contact ${index}:`, mapError, contact);
@@ -227,9 +208,7 @@ export default async function handler(req, res) {
       return a.name.localeCompare(b.name);
     });
 
-    console.log(`✅ Successfully mapped and sorted ${teamMembers.length} team members`);
 
-    console.log('🔍 Step 4: Sending response...');
     const responseData = {
       contacts: teamMembers, // Frontend expects 'contacts'
       teamMembers: teamMembers, // Also provide as teamMembers for compatibility
@@ -237,7 +216,6 @@ export default async function handler(req, res) {
       userRole,
       currentUserId
     };
-    console.log('✅ Response prepared:', {
       contactCount: teamMembers.length,
       organizationName: session.csc.organization_name,
       userRole,

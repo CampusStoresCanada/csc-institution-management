@@ -2,21 +2,17 @@
 import { createClient } from '@circleco/headless-server-sdk';
 
 export default async function handler(req, res) {
-  console.log('🚀 verify-circle-user API called');
-  console.log('📋 Method:', req.method);
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    console.log('✅ OPTIONS request handled');
     res.status(200).end();
     return;
   }
 
   if (req.method !== 'POST') {
-    console.log('❌ Invalid method:', req.method);
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
@@ -35,7 +31,6 @@ export default async function handler(req, res) {
   const notionToken = process.env.NOTION_TOKEN;
   const contactsDbId = process.env.NOTION_CONTACTS_DB_ID;
 
-  console.log('🔧 Environment variables check:', {
     circleApiToken: circleApiToken ? 'SET' : 'MISSING',
     notionToken: notionToken ? 'SET' : 'MISSING',
     contactsDbId: contactsDbId ? 'SET' : 'MISSING'
@@ -48,7 +43,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log(`🔍 Verifying Circle.so user: ${email}`);
 
     // Step 1: Initialize Circle.so SDK client
     const circleClient = createClient({ appToken: circleApiToken });
@@ -57,7 +51,6 @@ export default async function handler(req, res) {
     let circleAuth;
     try {
       circleAuth = await circleClient.getMemberAPITokenFromEmail(email);
-      console.log('✅ Circle.so authentication successful');
     } catch (circleError) {
       console.error('❌ Circle.so authentication failed:', circleError);
 
@@ -86,10 +79,8 @@ export default async function handler(req, res) {
       return;
     }
 
-    console.log(`✅ Circle.so authentication successful for member ID: ${community_member_id}`);
 
     // Step 3: Get user's Circle.so profile using Member API
-    console.log('👤 Fetching Circle.so member profile');
     const profileResponse = await fetch(`https://app.circle.so/api/v1/community_members/${community_member_id}`, {
       headers: {
         'Authorization': `Token ${process.env.CIRCLE_API_TOKEN}`,
@@ -102,7 +93,6 @@ export default async function handler(req, res) {
       console.error('❌ Circle.so profile fetch failed:', profileResponse.status, profileErrorText);
 
       // Fallback: create minimal user object from email
-      console.log('⚠️ Using minimal user data from email');
       const circleUser = {
         id: community_member_id,
         email: email,
@@ -110,7 +100,6 @@ export default async function handler(req, res) {
         avatar_url: null
       };
 
-      console.log(`✅ Circle.so user verified (minimal): ${circleUser.email}`);
 
       // Continue with minimal data
       await processUserData(circleUser, community_member_id, community_id, circleAccessToken, email, res);
@@ -125,7 +114,6 @@ export default async function handler(req, res) {
       avatar_url: circleProfile.avatar_url
     };
 
-    console.log(`✅ Circle.so user verified: ${circleUser.name} (${circleUser.email})`);
 
     // Step 4: Process user and complete authentication
     await processUserData(circleUser, community_member_id, community_id, circleAccessToken, email, res);
@@ -221,7 +209,6 @@ async function processUserData(circleUser, community_member_id, community_id, ci
     cscRole: isPrimary ? 'primary' : 'member'
   });
 
-  console.log(`✅ CSC session created for ${contactName} (${organizationName}) - Role: ${isPrimary ? 'primary' : 'member'}`);
 
   res.status(200).json({
     success: true,

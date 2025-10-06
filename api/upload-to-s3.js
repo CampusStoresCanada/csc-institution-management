@@ -19,17 +19,12 @@ export default async function handler(req, res) {
     
     const { files, organizationName, token } = req.body;
     
-    console.log('🔍 Backend received files:', files);
-    console.log('🔍 Files length:', files?.length);
-    console.log('🔍 Organization name:', organizationName);
     
     if (!files || !Array.isArray(files) || files.length === 0) {
-      console.log('❌ No files or invalid files array');
       res.status(400).json({ error: 'No files provided' });
       return;
     }
 
-    console.log(`📁 Uploading ${files.length} files for ${organizationName}...`);
 
     // Initialize S3 client
     const s3Client = new S3Client({
@@ -50,15 +45,11 @@ export default async function handler(req, res) {
     // Upload each file to S3
     for (const fileData of files) {
       try {
-        console.log(`⬆️ Uploading: ${fileData.name}`);
-        console.log(`🔍 Field name: ${fileData.fieldName}`);
         
         // Determine file path in S3
         const isCatalogueFile = fileData.fieldName === 'catalogFile';
         const isHighlightImage = fileData.fieldName === 'highlightImage';
         
-        console.log('🔍 isCatalogueFile:', isCatalogueFile);
-        console.log('🔍 isHighlightImage:', isHighlightImage);
         
         const fileName = fileData.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         
@@ -72,7 +63,6 @@ export default async function handler(req, res) {
         
         const s3Key = `${uploadResults.folderPath}${subFolder}${fileName}`;
         
-        console.log('🔍 Uploading to S3 key:', s3Key);
         
         // Convert base64 to buffer
         const fileBuffer = Buffer.from(fileData.content, 'base64');
@@ -93,17 +83,14 @@ export default async function handler(req, res) {
         // Store URL in appropriate field
         if (isCatalogueFile) {
           uploadResults.catalogueUrl = fileUrl;
-          console.log(`📄 Catalogue uploaded: ${fileUrl}`);
         } else if (isHighlightImage) {
           uploadResults.highlightImageUrl = fileUrl; // NEW: Store highlight image URL
-          console.log(`🖼️ Highlight image uploaded: ${fileUrl}`);
         } else {
           uploadResults.otherFiles.push({
             name: fileData.name,
             url: fileUrl,
             key: s3Key
           });
-          console.log(`📎 Document uploaded: ${fileData.name}`);
         }
         
       } catch (fileError) {
@@ -115,7 +102,6 @@ export default async function handler(req, res) {
                          (uploadResults.highlightImageUrl ? 1 : 0) + 
                          uploadResults.otherFiles.length;
 
-    console.log('🎉 Upload complete!', uploadResults);
 
     res.status(200).json({
       success: true,

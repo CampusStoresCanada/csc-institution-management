@@ -36,7 +36,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log(`🔍 Looking up organization: "${organizationName}" for email: ${contactEmail}`);
 
     // Step 1: Find organization by name (fuzzy search)
     const orgResponse = await fetch(`https://api.notion.com/v1/databases/${organizationsDbId}/query`, {
@@ -74,7 +73,6 @@ export default async function handler(req, res) {
     const orgName = organization.properties.Organization?.title?.[0]?.text?.content || organizationName;
     const orgToken = organization.properties.Token?.rich_text?.[0]?.text?.content;
 
-    console.log(`✅ Found organization: ${orgName} (ID: ${orgId})`);
 
     // Step 2: Check if the email is associated with this organization
     const contactResponse = await fetch(`https://api.notion.com/v1/databases/${contactsDbId}/query`, {
@@ -120,14 +118,11 @@ export default async function handler(req, res) {
     const contactName = contact.properties.Name?.title?.[0]?.text?.content || 'Team Member';
     const isPrimary = contact.properties['Primary Contact']?.checkbox || false;
 
-    console.log(`✅ Found contact: ${contactName} (Primary: ${isPrimary})`);
 
     // Step 3: Generate secure access token (for now, use existing org token with expiry)
     const accessToken = generateSecureToken(orgToken, contactEmail, isPrimary);
 
     // Step 4: Send email (placeholder for now)
-    console.log(`📧 Would send email to ${contactEmail} with access link`);
-    console.log(`🔗 Access link: ${req.headers.host}/manage?token=${accessToken}&expires=${Date.now() + 24*60*60*1000}`);
 
     // TODO: Implement actual email sending
     // For now, return success with token for testing

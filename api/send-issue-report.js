@@ -53,8 +53,6 @@ export default async function handler(req, res) {
       return;
     }
 
-    console.log(`📧 Processing issue report from ${reporterName} (${organizationName})`);
-    console.log(`📋 ${issues.length} issue(s) reported`);
 
     // Step 1: Find primary contact for this organization
     const organizationId = session.csc.organization_id;
@@ -85,7 +83,6 @@ export default async function handler(req, res) {
     }
 
     const primaryContactTagId = primaryTagData.results[0].id;
-    console.log('✅ Primary Contact tag ID:', primaryContactTagId);
 
     // Query contacts for this organization
     const contactsResponse = await fetch(`https://api.notion.com/v1/databases/${contactsDbId}/query`, {
@@ -132,7 +129,6 @@ export default async function handler(req, res) {
       return;
     }
 
-    console.log(`📧 Sending report to primary contact: ${primaryContact.name} (${primaryContact.email})`);
 
     // Step 2: Format email content
     const issuesList = issues.map((issue, idx) =>
@@ -156,9 +152,6 @@ This is an automated message from CSC Institution Management.
 `;
 
     // Step 3: Send email (placeholder - would use SendGrid, SES, etc.)
-    console.log('📧 Email Subject:', emailSubject);
-    console.log('📧 Email Body:', emailBody);
-    console.log('📧 To:', primaryContact.email);
 
     // TODO: Integrate with actual email service (SendGrid, AWS SES, etc.)
     // For now, just log the email content

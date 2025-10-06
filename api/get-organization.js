@@ -51,7 +51,6 @@ export default async function handler(req, res) {
     const organizationId = session.csc.organization_id;
     const userRole = session.csc.role; // 'primary' or 'member'
 
-    console.log(`📋 Fetching organization data for: ${session.csc.organization_name}`);
 
     // Fetch organization details from Notion
     const orgResponse = await fetch(`https://api.notion.com/v1/pages/${organizationId}`, {
@@ -112,7 +111,6 @@ export default async function handler(req, res) {
       { value: 'Out of Canada', label: 'Out of Canada' }
     ];
 
-    console.log(`✅ Organization data fetched successfully`);
 
     res.status(200).json({
       organization: organizationData,

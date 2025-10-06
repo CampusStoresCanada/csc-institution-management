@@ -20,16 +20,12 @@ export default async function handler(req, res) {
     
     const { fileList, organizationName, token } = req.body;
     
-    console.log('🔍 Backend received fileList:', fileList);
-    console.log('🔍 Organization:', organizationName);
     
     if (!fileList || !Array.isArray(fileList) || fileList.length === 0) {
-      console.log('❌ No files or invalid fileList array');
       res.status(400).json({ error: 'No files specified' });
       return;
     }
 
-    console.log(`📝 Creating presigned URLs for ${fileList.length} files...`);
 
     // Initialize S3 client
     const s3Client = new S3Client({
@@ -46,13 +42,10 @@ export default async function handler(req, res) {
     // Generate presigned URL for each file
     for (const fileInfo of fileList) {
       try {
-        console.log('🔍 Processing file:', fileInfo);
         
         const isCatalogueFile = fileInfo.fieldName === 'catalogFile';
         const isHighlightImage = fileInfo.fieldName === 'highlightImage';
         
-        console.log('🔍 isCatalogueFile:', isCatalogueFile);
-        console.log('🔍 isHighlightImage:', isHighlightImage);
         
         const fileName = fileInfo.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         
@@ -66,7 +59,6 @@ export default async function handler(req, res) {
         
         const s3Key = `${folderPath}${subFolder}${fileName}`;
         
-        console.log('🔍 S3 key will be:', s3Key);
         
         // Create presigned URL for upload
         const command = new PutObjectCommand({
@@ -87,14 +79,12 @@ export default async function handler(req, res) {
           isHighlight: isHighlightImage
         });
         
-        console.log(`📄 Created presigned URL for: ${fileInfo.name} -> ${subFolder}`);
         
       } catch (fileError) {
         console.error(`💥 Error creating URL for ${fileInfo.name}:`, fileError);
       }
     }
 
-    console.log(`🎉 Generated ${uploadUrls.length} presigned URLs!`);
 
     res.status(200).json({
       success: true,
