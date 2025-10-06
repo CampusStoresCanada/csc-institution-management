@@ -62,11 +62,13 @@ export default async function handler(req, res) {
     console.log(`📋 Organization ID: ${organizationId}`);
     console.log(`👤 User Role: ${userRole}, Contact ID: ${currentUserId}`);
 
-    // Step 2: Get Primary Contact tag ID from Tag System
-    console.log('🏷️ Step 2: Looking up Primary Contact tag...');
+    // Step 2: Get special tag IDs from Tag System
+    console.log('🏷️ Step 2: Looking up special tags...');
     let primaryContactTagId = null;
+    let conferenceDelegateTagId = null;
 
     try {
+      // Get Primary Contact tag
       const primaryTagResponse = await fetch(`https://api.notion.com/v1/databases/${tagSystemDbId}/query`, {
         method: 'POST',
         headers: {
@@ -91,8 +93,34 @@ export default async function handler(req, res) {
           console.warn('⚠️ Primary Contact tag not found in Tag System');
         }
       }
+
+      // Get Conference Delegate tag
+      const conferenceTagResponse = await fetch(`https://api.notion.com/v1/databases/${tagSystemDbId}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${notionToken}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28'
+        },
+        body: JSON.stringify({
+          filter: {
+            property: 'Name',
+            title: { equals: '26 Conference Delegate' }
+          }
+        })
+      });
+
+      if (conferenceTagResponse.ok) {
+        const conferenceTagData = await conferenceTagResponse.json();
+        if (conferenceTagData.results.length > 0) {
+          conferenceDelegateTagId = conferenceTagData.results[0].id;
+          console.log('✅ Conference Delegate tag ID:', conferenceDelegateTagId);
+        } else {
+          console.warn('⚠️ Conference Delegate tag not found in Tag System');
+        }
+      }
     } catch (tagError) {
-      console.error('❌ Error fetching Primary Contact tag:', tagError);
+      console.error('❌ Error fetching tags:', tagError);
     }
 
     // Query Notion for all contacts related to this organization
@@ -140,13 +168,23 @@ export default async function handler(req, res) {
 
     const teamMembers = contactsData.results.map((contact, index) => {
       try {
-        // Check for Primary Contact tag in Personal Tag relation
+        // Check for special tags in Personal Tag relation
         let isPrimary = false;
-        if (contact.properties['Personal Tag']?.relation && primaryContactTagId) {
+        let isConferenceDelegate = false;
+
+        if (contact.properties['Personal Tag']?.relation) {
           const personalTagIds = contact.properties['Personal Tag'].relation.map(tag => tag.id);
-          isPrimary = personalTagIds.includes(primaryContactTagId);
-          if (isPrimary && index === 0) {
+
+          // Check for Primary Contact tag
+          if (primaryContactTagId && personalTagIds.includes(primaryContactTagId)) {
+            isPrimary = true;
             console.log(`👑 Found primary contact: ${contact.properties.Name?.title?.[0]?.text?.content}`);
+          }
+
+          // Check for Conference Delegate tag
+          if (conferenceDelegateTagId && personalTagIds.includes(conferenceDelegateTagId)) {
+            isConferenceDelegate = true;
+            console.log(`🎪 Found conference delegate: ${contact.properties.Name?.title?.[0]?.text?.content}`);
           }
         }
 
@@ -168,6 +206,7 @@ export default async function handler(req, res) {
           phone: contact.properties['Work Phone Number']?.phone_number || '',
           title: contact.properties['Role/Title']?.rich_text?.[0]?.text?.content || '',
           isPrimary: isPrimary,
+          isConferenceDelegate: isConferenceDelegate,
           isCurrentUser: isCurrentUser,
           canEdit: canEdit,
           canChangePrimary: canChangePrimary
