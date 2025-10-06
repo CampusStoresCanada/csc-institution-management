@@ -125,15 +125,15 @@ export default async function handler(req, res) {
           id: contactId,
           name: contact.properties.Name?.title?.[0]?.text?.content || '',
           email: contact.properties['Work Email']?.email || '',
-          phone: contact.properties['Work Phone']?.phone_number || '',
-          title: contact.properties.Title?.rich_text?.[0]?.text?.content || '',
+          phone: contact.properties['Work Phone Number']?.phone_number || '',
+          title: contact.properties['Role/Title']?.rich_text?.[0]?.text?.content || '',
           isPrimary: isPrimary,
           isCurrentUser: isCurrentUser,
           canEdit: canEdit,
           canChangePrimary: canChangePrimary
         };
 
-        console.log(`  ✅ Contact ${index + 1}: ${member.name} (${member.email}) - Primary: ${isPrimary}`);
+        console.log(`  ✅ Contact ${index + 1}: ${member.name} (${member.email}) - Phone: "${member.phone}", Title: "${member.title}", Primary: ${isPrimary}`);
         return member;
       } catch (mapError) {
         console.error(`❌ Error mapping contact ${index}:`, mapError, contact);
