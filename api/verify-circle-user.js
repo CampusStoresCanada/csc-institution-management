@@ -31,11 +31,6 @@ export default async function handler(req, res) {
   const notionToken = process.env.NOTION_TOKEN;
   const contactsDbId = process.env.NOTION_CONTACTS_DB_ID;
 
-    circleApiToken: circleApiToken ? 'SET' : 'MISSING',
-    notionToken: notionToken ? 'SET' : 'MISSING',
-    contactsDbId: contactsDbId ? 'SET' : 'MISSING'
-  });
-
   if (!circleApiToken || !notionToken || !contactsDbId) {
     console.error('❌ Missing environment variables for Circle verification');
     res.status(500).json({ error: 'Server configuration error' });
