@@ -25,8 +25,9 @@ export default async function handler(req, res) {
 
   const notionToken = process.env.NOTION_TOKEN;
   const contactsDbId = process.env.NOTION_CONTACTS_DB_ID;
+  const tagSystemDbId = process.env.NOTION_TAG_SYSTEM_DB_ID;
 
-  if (!notionToken || !contactsDbId) {
+  if (!notionToken || !contactsDbId || !tagSystemDbId) {
     console.error('❌ Missing environment variables!');
     res.status(500).json({ error: 'Server configuration error' });
     return;
@@ -61,8 +62,41 @@ export default async function handler(req, res) {
     console.log(`📋 Organization ID: ${organizationId}`);
     console.log(`👤 User Role: ${userRole}, Contact ID: ${currentUserId}`);
 
+    // Step 2: Get Primary Contact tag ID from Tag System
+    console.log('🏷️ Step 2: Looking up Primary Contact tag...');
+    let primaryContactTagId = null;
+
+    try {
+      const primaryTagResponse = await fetch(`https://api.notion.com/v1/databases/${tagSystemDbId}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${notionToken}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28'
+        },
+        body: JSON.stringify({
+          filter: {
+            property: 'Name',
+            title: { equals: 'Primary Contact' }
+          }
+        })
+      });
+
+      if (primaryTagResponse.ok) {
+        const primaryTagData = await primaryTagResponse.json();
+        if (primaryTagData.results.length > 0) {
+          primaryContactTagId = primaryTagData.results[0].id;
+          console.log('✅ Primary Contact tag ID:', primaryContactTagId);
+        } else {
+          console.warn('⚠️ Primary Contact tag not found in Tag System');
+        }
+      }
+    } catch (tagError) {
+      console.error('❌ Error fetching Primary Contact tag:', tagError);
+    }
+
     // Query Notion for all contacts related to this organization
-    console.log('🔍 Step 2: Querying Notion contacts database...');
+    console.log('🔍 Step 3: Querying Notion contacts database...');
     const contactsResponse = await fetch(`https://api.notion.com/v1/databases/${contactsDbId}/query`, {
       method: 'POST',
       headers: {
@@ -106,19 +140,16 @@ export default async function handler(req, res) {
 
     const teamMembers = contactsData.results.map((contact, index) => {
       try {
-        // Check for Primary Contact checkbox - may have different property name
-        // Log what we're checking for the first contact
-        if (index === 0) {
-          console.log('🔍 Checking Primary Contact property:', {
-            'Primary Contact': contact.properties['Primary Contact'],
-            'Primary': contact.properties['Primary'],
-            'Contact Type': contact.properties['Contact Type']
-          });
+        // Check for Primary Contact tag in Personal Tag relation
+        let isPrimary = false;
+        if (contact.properties['Personal Tag']?.relation && primaryContactTagId) {
+          const personalTagIds = contact.properties['Personal Tag'].relation.map(tag => tag.id);
+          isPrimary = personalTagIds.includes(primaryContactTagId);
+          if (isPrimary && index === 0) {
+            console.log(`👑 Found primary contact: ${contact.properties.Name?.title?.[0]?.text?.content}`);
+          }
         }
 
-        const isPrimary = contact.properties['Primary Contact']?.checkbox ||
-                         contact.properties['Primary']?.checkbox ||
-                         false;
         const contactId = contact.id;
         const isCurrentUser = contactId === currentUserId;
 
