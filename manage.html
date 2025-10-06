@@ -4094,7 +4094,7 @@
             const editDisabled = !contact.canEdit ? 'disabled' : '';
             const editTitle = contact.canEdit ? 'Edit contact' : 'You do not have permission to edit this contact';
 
-            contactDiv.innerHTML = `
+            const htmlContent = `
                 <div class="primary-contact-selector" onclick="setPrimaryContact('${contact.id}'); event.stopPropagation();" title="${contact.canChangePrimary ? 'Click to set as primary contact' : 'Only primary contact can change this'}">
                     ${contact.isPrimary ? '<span class="primary-crown">👑</span>' : '<div class="primary-placeholder"></div>'}
                 </div>
@@ -4115,6 +4115,9 @@
                     </svg>
                 </button>
             `;
+
+            console.log(`  🎨 Rendering HTML for ${contact.name}:`, htmlContent.substring(0, 200));
+            contactDiv.innerHTML = htmlContent;
 
             return contactDiv;
         }
