@@ -107,6 +107,15 @@ export default async function handler(req, res) {
     const teamMembers = contactsData.results.map((contact, index) => {
       try {
         // Check for Primary Contact checkbox - may have different property name
+        // Log what we're checking for the first contact
+        if (index === 0) {
+          console.log('🔍 Checking Primary Contact property:', {
+            'Primary Contact': contact.properties['Primary Contact'],
+            'Primary': contact.properties['Primary'],
+            'Contact Type': contact.properties['Contact Type']
+          });
+        }
+
         const isPrimary = contact.properties['Primary Contact']?.checkbox ||
                          contact.properties['Primary']?.checkbox ||
                          false;
