@@ -4130,9 +4130,8 @@
             // Get dietary restrictions from Notion contact data
             const dietaryRestrictions = contact.dietaryRestrictions || '';
 
-            // Determine if edit button should be disabled based on permissions
-            const editDisabled = !contact.canEdit ? 'disabled' : '';
-            const editTitle = contact.canEdit ? 'Edit contact' : 'You do not have permission to edit this contact';
+            // Edit button is always enabled - permission logic handled in editContact()
+            const editTitle = contact.canEdit ? 'Edit contact' : 'Report an issue with this contact';
 
             const htmlContent = `
                 <div class="primary-contact-selector" onclick="setPrimaryContact('${contact.id}'); event.stopPropagation();" title="${contact.canChangePrimary ? 'Click to set as primary contact' : 'Only primary contact can change this'}">
@@ -4148,7 +4147,7 @@
                 <div class="contact-checkbox" onclick="toggleAttendance('${contact.id}'); event.stopPropagation();" title="Click to mark as attending">
                     <div class="checkbox-circle ${isAttending ? 'checked' : ''}"></div>
                 </div>
-                <button class="contact-edit" ${editDisabled} onclick="editContact('${contact.id}', ${index}); event.stopPropagation();" title="${editTitle}">
+                <button class="contact-edit" onclick="editContact('${contact.id}', ${index}); event.stopPropagation();" title="${editTitle}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="m18 2 4 4-14 14H4v-4L18 2z"/>
                         <path d="m14.5 5.5 4 4"/>
