@@ -253,6 +253,26 @@
             </div>
             <!-- Main Content -->
             <div class="main-content">
+                <!-- Floating Report Indicator -->
+                <div id="reportIndicator" style="display: none; position: fixed; top: 20px; right: 20px; cursor: pointer; z-index: 1000;" onclick="openReportReviewModal()" title="Click to review and submit your report">
+                    <svg width="50" height="50" viewBox="0 0 50 50" style="filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));">
+                        <!-- Amber triangle with pulse animation -->
+                        <defs>
+                            <style>
+                                @keyframes pulse {
+                                    0%, 100% { opacity: 1; }
+                                    50% { opacity: 0.7; }
+                                }
+                                .triangle-pulse { animation: pulse 2s ease-in-out infinite; }
+                            </style>
+                        </defs>
+                        <path class="triangle-pulse" d="M 25 5 L 45 40 L 5 40 Z" fill="#ffc107" stroke="#f57c00" stroke-width="2"/>
+                        <text x="25" y="32" text-anchor="middle" fill="#333" font-size="20" font-weight="bold">!</text>
+                    </svg>
+                    <!-- Badge counter -->
+                    <div id="reportCount" style="position: absolute; top: -5px; right: -5px; background: white; border: 2px solid #f57c00; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; color: #f57c00;">0</div>
+                </div>
+
                 <!-- Mobile Progress Bar -->
                 <div class="mobile-progress">
                     <div class="mobile-progress-fill" style="width: 0%"></div>
@@ -395,16 +415,6 @@
                             </button>
                         </div>
 
-                        <!-- Report Issue Section (for non-primary contacts only) -->
-                        <div id="reportIssueSection" style="display: none; margin-top: 40px; padding: 20px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffc107;">
-                            <h3 style="color: #856404; font-size: 16px; font-weight: 600; margin-bottom: 10px;">📝 Report an Issue</h3>
-                            <p style="color: #856404; font-size: 14px; margin-bottom: 15px;">
-                                If you notice incorrect information about your organization that you cannot edit, you can report it to your primary contact.
-                            </p>
-                            <button class="btn secondary" onclick="openReportIssueModal()" style="background: #ffc107; color: #856404; border: none;">
-                                Report Issue to Primary Contact
-                            </button>
-                        </div>
                     </div>
 
                     <!-- Navigation Buttons -->
@@ -1670,7 +1680,28 @@
             if (fieldName === 'category') {
                 return;
             }
-            
+
+            // Check if this is an organization field and user is not primary
+            const orgFields = ['institutionName', 'website', 'institutionSize', 'address'];
+            const isOrgField = orgFields.includes(fieldName);
+            const isPrimary = window.userRole === 'primary';
+
+            if (isOrgField && !isPrimary) {
+                // Non-primary user trying to edit org field - offer to add to report
+                const fieldLabels = {
+                    institutionName: 'Institution Name',
+                    website: 'Website',
+                    institutionSize: 'Institution Size',
+                    address: 'Address'
+                };
+
+                const currentValue = formState[fieldName] ||
+                    (fieldName === 'address' ? `${formState.streetAddress}, ${formState.city}, ${formState.province} ${formState.postalCode}` : '');
+
+                addToReportCart(fieldName, fieldLabels[fieldName], currentValue);
+                return;
+            }
+
             if (activeField && activeField !== fieldName) {
                 closeField(activeField);
             }
@@ -1679,18 +1710,18 @@
             const fieldElement = document.querySelector(`[data-field="${fieldName}"]`);
             const displayElement = document.getElementById(`${fieldName}Display`);
             const editButton = document.getElementById(`edit${capitalizeFirst(fieldName)}`);
-            
+
             const displayRect = displayElement.getBoundingClientRect();
             const fieldRect = fieldElement.getBoundingClientRect();
-            
+
             const relativeTop = displayRect.top - fieldRect.top;
             const relativeLeft = displayRect.left - fieldRect.left;
-            
+
             displayElement.style.opacity = '0';
             editButton.style.opacity = '0';
-            
+
             createFieldOverlay(fieldName, relativeLeft, relativeTop, displayRect.width, displayRect.height);
-            
+
             console.log('📝 Editing field:', fieldName);
         }
 
@@ -4295,38 +4326,175 @@
         }
 
         // ===========================================
-        // REPORT ISSUE FUNCTIONALITY
+        // REPORT CART FUNCTIONALITY
         // ===========================================
-        function openReportIssueModal() {
-            const message = prompt(
-                "Please describe the issue with your organization's information:\n\n" +
-                "This will be sent to your primary contact for review."
-            );
+        let reportCart = {
+            items: [], // Array of {fieldName, fieldLabel, currentValue, issueDescription}
+            count: 0
+        };
 
-            if (message && message.trim()) {
-                sendIssueReport(message.trim());
+        function updateReportIndicator() {
+            const indicator = document.getElementById('reportIndicator');
+            const countBadge = document.getElementById('reportCount');
+
+            if (reportCart.count > 0) {
+                indicator.style.display = 'block';
+                countBadge.textContent = reportCart.count;
+            } else {
+                indicator.style.display = 'none';
             }
         }
 
-        async function sendIssueReport(message) {
-            try {
-                console.log('📧 Sending issue report...');
+        function addToReportCart(fieldName, fieldLabel, currentValue) {
+            const message = prompt(
+                `You don't have permission to edit "${fieldLabel}".\n\n` +
+                `Current value: ${currentValue || '(empty)'}\n\n` +
+                `Please describe what needs to be changed:`
+            );
 
+            if (message && message.trim()) {
+                // Check if this field is already in the cart
+                const existingIndex = reportCart.items.findIndex(item => item.fieldName === fieldName);
+
+                if (existingIndex >= 0) {
+                    // Update existing item
+                    reportCart.items[existingIndex].issueDescription = message.trim();
+                } else {
+                    // Add new item
+                    reportCart.items.push({
+                        fieldName,
+                        fieldLabel,
+                        currentValue: currentValue || '(empty)',
+                        issueDescription: message.trim()
+                    });
+                    reportCart.count++;
+                }
+
+                // Highlight the field with amber
+                const fieldElement = document.querySelector(`[data-field="${fieldName}"]`);
+                if (fieldElement) {
+                    fieldElement.style.background = '#fff3cd';
+                    fieldElement.style.border = '2px solid #ffc107';
+                    fieldElement.style.borderRadius = '8px';
+                    fieldElement.style.padding = '10px';
+                }
+
+                updateReportIndicator();
+                console.log('✅ Added to report cart:', fieldName);
+            }
+        }
+
+        function openReportReviewModal() {
+            if (reportCart.count === 0) return;
+
+            let reviewHTML = '<h3>Review Your Report</h3><p>The following issues will be sent to your primary contact:</p><div style="max-height: 400px; overflow-y: auto;">';
+
+            reportCart.items.forEach((item, index) => {
+                reviewHTML += `
+                    <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <strong>${item.fieldLabel}</strong><br>
+                        <span style="color: #666; font-size: 13px;">Current: ${item.currentValue}</span><br>
+                        <span style="color: #333; margin-top: 8px; display: block;">Issue: ${item.issueDescription}</span>
+                        <button onclick="removeFromCart(${index})" style="margin-top: 8px; padding: 4px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
+                    </div>
+                `;
+            });
+
+            reviewHTML += '</div>';
+            reviewHTML += '<div style="margin-top: 20px; display: flex; gap: 10px;">';
+            reviewHTML += '<button onclick="sendFullReport()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Send Report</button>';
+            reviewHTML += '<button onclick="closeReportModal()" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer;">Cancel</button>';
+            reviewHTML += '</div>';
+
+            // Create modal overlay
+            const modal = document.createElement('div');
+            modal.id = 'reportReviewModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+            modal.innerHTML = `<div style="background: white; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%;">${reviewHTML}</div>`;
+
+            document.body.appendChild(modal);
+        }
+
+        function removeFromCart(index) {
+            const item = reportCart.items[index];
+
+            // Remove amber highlighting
+            const fieldElement = document.querySelector(`[data-field="${item.fieldName}"]`);
+            if (fieldElement) {
+                fieldElement.style.background = '';
+                fieldElement.style.border = '';
+                fieldElement.style.borderRadius = '';
+                fieldElement.style.padding = '';
+            }
+
+            reportCart.items.splice(index, 1);
+            reportCart.count--;
+            updateReportIndicator();
+
+            // Refresh modal
+            closeReportModal();
+            if (reportCart.count > 0) {
+                openReportReviewModal();
+            }
+        }
+
+        function closeReportModal() {
+            const modal = document.getElementById('reportReviewModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        async function sendFullReport() {
+            try {
                 const reportData = {
                     reporterName: window.userData.csc.contact_name,
                     reporterEmail: window.userData.csc.work_email,
                     organizationName: window.userData.csc.organization,
-                    issueDescription: message
+                    issues: reportCart.items
                 };
 
-                // For now, just show success message
-                // TODO: Create API endpoint to email primary contact
-                alert('Thank you! Your issue report has been sent to the primary contact.');
-                console.log('✅ Issue report:', reportData);
+                console.log('📧 Sending full report:', reportData);
+
+                // Send report to API
+                const sessionToken = sessionStorage.getItem('csc_session_token');
+                const response = await fetch('/api/send-issue-report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionToken}`
+                    },
+                    body: JSON.stringify(reportData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to send report');
+                }
+
+                const result = await response.json();
+                console.log('✅ Report sent successfully:', result);
+                alert(`Thank you! Your report with ${reportCart.count} issue(s) has been sent to ${result.primaryContactEmail}.`);
+
+                // Clear cart and remove highlighting
+                reportCart.items.forEach(item => {
+                    const fieldElement = document.querySelector(`[data-field="${item.fieldName}"]`);
+                    if (fieldElement) {
+                        fieldElement.style.background = '';
+                        fieldElement.style.border = '';
+                        fieldElement.style.borderRadius = '';
+                        fieldElement.style.padding = '';
+                    }
+                });
+
+                reportCart.items = [];
+                reportCart.count = 0;
+                updateReportIndicator();
+                closeReportModal();
 
             } catch (error) {
-                console.error('❌ Error sending issue report:', error);
-                alert('Sorry, there was an error sending your report. Please try again or contact steve@campusstores.ca directly.');
+                console.error('❌ Error sending report:', error);
+                alert('Sorry, there was an error sending your report. Please try again.');
             }
         }
 
