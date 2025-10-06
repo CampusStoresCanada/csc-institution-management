@@ -98,6 +98,12 @@ export default async function handler(req, res) {
 
     // Map contacts to team member format with permissions
     console.log('🔍 Step 3: Mapping contacts to team member format...');
+
+    // Log all available properties from first contact to debug
+    if (contactsData.results.length > 0) {
+      console.log('🔍 Available properties in first contact:', Object.keys(contactsData.results[0].properties));
+    }
+
     const teamMembers = contactsData.results.map((contact, index) => {
       try {
         // Check for Primary Contact checkbox - may have different property name
