@@ -4506,6 +4506,22 @@
         }
 
         async function sendFullReport() {
+            // Disable send button and show loading state
+            const sendButton = document.querySelector('button[onclick="sendFullReport()"]');
+            const cancelButton = document.querySelector('button[onclick="closeReportModal()"]');
+
+            if (sendButton) {
+                sendButton.disabled = true;
+                sendButton.style.opacity = '0.6';
+                sendButton.style.cursor = 'not-allowed';
+                sendButton.innerHTML = '⏳ Sending...';
+            }
+            if (cancelButton) {
+                cancelButton.disabled = true;
+                cancelButton.style.opacity = '0.6';
+                cancelButton.style.cursor = 'not-allowed';
+            }
+
             try {
                 const reportData = {
                     reporterName: window.userData.csc.contact_name,
@@ -4554,6 +4570,19 @@
             } catch (error) {
                 console.error('❌ Error sending report:', error);
                 alert('Sorry, there was an error sending your report. Please try again.');
+
+                // Re-enable buttons on error
+                if (sendButton) {
+                    sendButton.disabled = false;
+                    sendButton.style.opacity = '1';
+                    sendButton.style.cursor = 'pointer';
+                    sendButton.innerHTML = 'Send Report';
+                }
+                if (cancelButton) {
+                    cancelButton.disabled = false;
+                    cancelButton.style.opacity = '1';
+                    cancelButton.style.cursor = 'pointer';
+                }
             }
         }
 
