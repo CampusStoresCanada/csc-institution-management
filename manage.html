@@ -4173,6 +4173,40 @@
         }
         
         function toggleAttendance(contactId) {
+            // PERMISSION CHECK: Only primary contact can change attendance
+            if (window.userRole !== 'primary') {
+                const contact = organizationContacts.find(c => c.id === contactId);
+                const contactName = contact ? contact.name : 'this contact';
+                const isCurrentlyAttending = teamState.attendingContacts.has(contactId);
+
+                const confirmReport = confirm(
+                    `Only the primary contact can change conference attendance.\n\n` +
+                    `Would you like to report that ${contactName}'s attendance status needs to be updated?`
+                );
+
+                if (confirmReport) {
+                    const message = prompt(
+                        `Reporting attendance issue for ${contactName}:\n\n` +
+                        `Current status: ${isCurrentlyAttending ? 'Attending' : 'Not attending'}\n\n` +
+                        `Please describe what needs to be changed:`
+                    );
+
+                    if (message && message.trim()) {
+                        reportCart.items.push({
+                            fieldName: `attendance_${contactId}`,
+                            fieldLabel: `${contactName}'s Conference Attendance`,
+                            currentValue: isCurrentlyAttending ? 'Attending' : 'Not attending',
+                            issueDescription: message.trim()
+                        });
+                        reportCart.count++;
+                        updateReportIndicator();
+
+                        alert(`Attendance issue reported for ${contactName}. Click the triangle icon in the top-right to review and send your report.`);
+                    }
+                }
+                return;
+            }
+
             const checkbox = document.querySelector(`[data-contact-id="${contactId}"] .checkbox-circle`);
             if (!checkbox) return;
 
@@ -4188,6 +4222,42 @@
         }
 
         function setPrimaryContact(contactId) {
+            // PERMISSION CHECK: Only primary contact can change who is primary
+            if (window.userRole !== 'primary') {
+                const contact = organizationContacts.find(c => c.id === contactId);
+                const contactName = contact ? contact.name : 'this contact';
+                const currentPrimary = organizationContacts.find(c => c.isPrimary);
+                const currentPrimaryName = currentPrimary ? currentPrimary.name : 'Unknown';
+
+                const confirmReport = confirm(
+                    `Only the primary contact can change who is the primary contact.\n\n` +
+                    `Would you like to report that the primary contact needs to be changed?`
+                );
+
+                if (confirmReport) {
+                    const message = prompt(
+                        `Reporting primary contact change request:\n\n` +
+                        `Current primary: ${currentPrimaryName}\n` +
+                        `Requested primary: ${contactName}\n\n` +
+                        `Please explain why this change is needed:`
+                    );
+
+                    if (message && message.trim()) {
+                        reportCart.items.push({
+                            fieldName: `primary_contact_${contactId}`,
+                            fieldLabel: `Primary Contact Change`,
+                            currentValue: `${currentPrimaryName} → ${contactName}`,
+                            issueDescription: message.trim()
+                        });
+                        reportCart.count++;
+                        updateReportIndicator();
+
+                        alert(`Primary contact change request reported. Click the triangle icon in the top-right to review and send your report.`);
+                    }
+                }
+                return;
+            }
+
             // Update the contact data
             organizationContacts.forEach(contact => {
                 contact.isPrimaryContact = (contact.id === contactId);
