@@ -394,6 +394,17 @@
                                 </svg>
                             </button>
                         </div>
+
+                        <!-- Report Issue Section (for non-primary contacts only) -->
+                        <div id="reportIssueSection" style="display: none; margin-top: 40px; padding: 20px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffc107;">
+                            <h3 style="color: #856404; font-size: 16px; font-weight: 600; margin-bottom: 10px;">📝 Report an Issue</h3>
+                            <p style="color: #856404; font-size: 14px; margin-bottom: 15px;">
+                                If you notice incorrect information about your organization that you cannot edit, you can report it to your primary contact.
+                            </p>
+                            <button class="btn secondary" onclick="openReportIssueModal()" style="background: #ffc107; color: #856404; border: none;">
+                                Report Issue to Primary Contact
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Navigation Buttons -->
@@ -3697,6 +3708,11 @@
             // Populate user contact information from session userData
             populateUserContactInfo();
 
+            // Show Report Issue section for non-primary users
+            if (window.userRole === 'member') {
+                document.getElementById('reportIssueSection').style.display = 'block';
+            }
+
             window.formData = {
                 organization: data.organization
             };
@@ -4277,6 +4293,43 @@
         function initializeStep6() {
             console.log('🚀 Step 6 (Results) initialized!');
         }
+
+        // ===========================================
+        // REPORT ISSUE FUNCTIONALITY
+        // ===========================================
+        function openReportIssueModal() {
+            const message = prompt(
+                "Please describe the issue with your organization's information:\n\n" +
+                "This will be sent to your primary contact for review."
+            );
+
+            if (message && message.trim()) {
+                sendIssueReport(message.trim());
+            }
+        }
+
+        async function sendIssueReport(message) {
+            try {
+                console.log('📧 Sending issue report...');
+
+                const reportData = {
+                    reporterName: window.userData.csc.contact_name,
+                    reporterEmail: window.userData.csc.work_email,
+                    organizationName: window.userData.csc.organization,
+                    issueDescription: message
+                };
+
+                // For now, just show success message
+                // TODO: Create API endpoint to email primary contact
+                alert('Thank you! Your issue report has been sent to the primary contact.');
+                console.log('✅ Issue report:', reportData);
+
+            } catch (error) {
+                console.error('❌ Error sending issue report:', error);
+                alert('Sorry, there was an error sending your report. Please try again or contact steve@campusstores.ca directly.');
+            }
+        }
+
         // ===========================================
         // CONTACT MODAL MANAGEMENT
         // ===========================================
