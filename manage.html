@@ -4301,7 +4301,8 @@
                 if (label) {
                     if (prefix === 'Current' && fieldName !== 'name') {
                         // For edit mode, show current values in labels
-                        const currentValue = modalState.currentContact[fieldName === 'title' ? 'roleTitle' : fieldName === 'email' ? 'workEmail' : fieldName === 'phone' ? 'workPhone' : fieldName];
+                        // API now returns 'title', 'email', 'phone' directly (not 'roleTitle', 'workEmail', 'workPhone')
+                        const currentValue = modalState.currentContact[fieldName];
                         label.textContent = currentValue ? `Current: ${currentValue}` : `Current: ${labels[fieldName]}`;
                     } else {
                         label.textContent = `${prefix}: ${labels[fieldName]}`;
@@ -4360,9 +4361,9 @@
             modalState.currentContactIndex = contactIndex;
             modalState.formData = {
                 name: contact.name || '',
-                title: contact.roleTitle || '',
-                email: contact.workEmail || '',
-                phone: contact.workPhone || '',
+                title: contact.title || '',
+                email: contact.email || '',
+                phone: contact.phone || '',
                 dietary: contact.dietaryRestrictions || ''
             };
             
@@ -4417,7 +4418,8 @@
                 if (label) {
                     if (prefix === 'Current' && fieldName !== 'name') {
                         // For edit mode, show current values in labels
-                        const currentValue = modalState.currentContact[fieldName === 'title' ? 'roleTitle' : fieldName === 'email' ? 'workEmail' : fieldName === 'phone' ? 'workPhone' : fieldName];
+                        // API now returns 'title', 'email', 'phone' directly (not 'roleTitle', 'workEmail', 'workPhone')
+                        const currentValue = modalState.currentContact[fieldName];
                         label.textContent = currentValue ? `Current: ${currentValue}` : `Current: ${labels[fieldName]}`;
                     } else {
                         label.textContent = `${prefix}: ${labels[fieldName]}`;
