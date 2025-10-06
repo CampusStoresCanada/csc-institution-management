@@ -25,9 +25,9 @@ export default async function handler(req, res) {
 
   const notionToken = process.env.NOTION_TOKEN;
   const contactsDbId = process.env.NOTION_CONTACTS_DB_ID;
-  const tagSystemDbId = process.env.NOTION_TAG_SYSTEM_DB_ID;
+  const tagSystemDbId = process.env.NOTION_TAG_SYSTEM_DB_ID || '1f9a69bf0cfd8034b919f51b7c4f2c67';
 
-  if (!notionToken || !contactsDbId || !tagSystemDbId) {
+  if (!notionToken || !contactsDbId) {
     console.error('❌ Missing environment variables!');
     res.status(500).json({ error: 'Server configuration error' });
     return;
