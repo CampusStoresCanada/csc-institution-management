@@ -1418,11 +1418,6 @@
             const organizationData = prepareOrganizationData();
             const billingPreferences = prepareBillingPreferences();
 
-                organization: organizationData.name,
-                total: invoiceData.total,
-                billingDisplay: billingPreferences.billingDisplay
-            });
-
             // Call QBO API
             const response = await fetch('/api/create-qbo-invoice', {
                 method: 'POST',
