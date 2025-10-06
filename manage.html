@@ -254,20 +254,26 @@
             <!-- Main Content -->
             <div class="main-content">
                 <!-- Floating Report Indicator -->
-                <div id="reportIndicator" style="display: none; position: fixed; top: 20px; right: 20px; cursor: pointer; z-index: 1000;" onclick="openReportReviewModal()" title="Click to review and submit your report">
-                    <svg width="50" height="50" viewBox="0 0 50 50" style="filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));">
-                        <!-- Amber triangle with pulse animation -->
+                <div id="reportIndicator" style="display: none; position: fixed; top: 40px; right: 40px; cursor: pointer; z-index: 1000;" onclick="openReportReviewModal()" title="Click to review and submit your report">
+                    <svg width="50" height="50" viewBox="0 0 50 50">
+                        <!-- Amber triangle with glow pulse animation -->
                         <defs>
                             <style>
-                                @keyframes pulse {
-                                    0%, 100% { opacity: 1; }
-                                    50% { opacity: 0.7; }
+                                @keyframes glowPulse {
+                                    0%, 100% {
+                                        filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.8)) drop-shadow(0 0 12px rgba(255, 193, 7, 0.6));
+                                    }
+                                    50% {
+                                        filter: drop-shadow(0 0 16px rgba(255, 193, 7, 1)) drop-shadow(0 0 24px rgba(255, 193, 7, 0.8));
+                                    }
                                 }
-                                .triangle-pulse { animation: pulse 2s ease-in-out infinite; }
+                                .triangle-glow { animation: glowPulse 2s ease-in-out infinite; }
                             </style>
                         </defs>
-                        <path class="triangle-pulse" d="M 25 5 L 45 40 L 5 40 Z" fill="#ffc107" stroke="#f57c00" stroke-width="2"/>
-                        <text x="25" y="32" text-anchor="middle" fill="#333" font-size="20" font-weight="bold">!</text>
+                        <g class="triangle-glow">
+                            <path d="M 25 5 L 45 40 L 5 40 Z" fill="#ffc107" stroke="#f57c00" stroke-width="2"/>
+                            <text x="25" y="32" text-anchor="middle" fill="#333" font-size="20" font-weight="bold">!</text>
+                        </g>
                     </svg>
                     <!-- Badge counter -->
                     <div id="reportCount" style="position: absolute; top: -5px; right: -5px; background: white; border: 2px solid #f57c00; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; color: #f57c00;">0</div>
@@ -4561,17 +4567,50 @@
         function openEditContactModal(contactId, contactIndex) {
             // Find the contact data
             let contact = organizationContacts.find(c => c.id === contactId);
-            
+
             // If not found in original contacts, check new contacts
             if (!contact) {
                 contact = teamState.newContacts.find(c => c.id === contactId);
             }
-            
+
             if (!contact) {
                 console.error('❌ Contact not found:', contactId);
                 return;
             }
-            
+
+            // PERMISSION CHECK: Non-primary users can only edit themselves
+            const isPrimary = window.userRole === 'primary';
+            const isCurrentUser = contact.isCurrentUser;
+
+            if (!isPrimary && !isCurrentUser) {
+                // Non-primary user trying to edit someone else - offer to report
+                const confirmReport = confirm(
+                    `You don't have permission to edit ${contact.name}'s information.\n\n` +
+                    `Would you like to report an issue with their contact details to the primary contact?`
+                );
+
+                if (confirmReport) {
+                    const message = prompt(
+                        `Reporting issue with ${contact.name}'s contact information:\n\n` +
+                        `Please describe what needs to be changed:`
+                    );
+
+                    if (message && message.trim()) {
+                        reportCart.items.push({
+                            fieldName: `contact_${contact.id}`,
+                            fieldLabel: `${contact.name}'s Contact Info`,
+                            currentValue: `${contact.email || ''}, ${contact.phone || ''}`,
+                            issueDescription: message.trim()
+                        });
+                        reportCart.count++;
+                        updateReportIndicator();
+
+                        alert(`Issue reported for ${contact.name}. Click the triangle icon in the top-right to review and send your report.`);
+                    }
+                }
+                return;
+            }
+
             modalState.mode = 'edit';
             modalState.currentContact = contact;
             modalState.currentContactIndex = contactIndex;
@@ -4582,7 +4621,7 @@
                 phone: contact.phone || '',
                 dietary: contact.dietaryRestrictions || ''
             };
-            
+
             // Update modal content
             document.getElementById('modalTitle').textContent = 'Current: ' + contact.name;
             updateModalLabels('Current');
