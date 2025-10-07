@@ -2490,7 +2490,7 @@
 
                 if (!customerEmail) {
                     throw new Error('No customer email address available');
-                });
+                }
 
                 // Call our email API endpoint
                 const emailResponse = await fetch('/api/email-qbo-invoice', {
