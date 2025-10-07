@@ -165,7 +165,7 @@ This is an automated message from CSC Institution Management.
     const sendEmailCommand = new SendEmailCommand({
       Source: process.env.SES_FROM_EMAIL || 'steve@campusstores.ca',
       Destination: {
-        ToAddresses: [primaryContact.email]
+        ToAddresses: ['stephen@mcphersonmanagement.com'] // TEMP: Testing - normally primaryContact.email
       },
       Message: {
         Subject: {
