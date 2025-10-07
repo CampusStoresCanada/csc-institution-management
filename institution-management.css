@@ -2713,13 +2713,8 @@ body::before {
     }
 
 
-    .step-navigation {
-        display: none;
-    }
-
     .mobile-progress {
-        display: block;
-        margin: 0 -20px 24px -20px;
+        display: none; /* No longer using mobile progress bar */
     }
 
     /* Welcome Section Mobile */
