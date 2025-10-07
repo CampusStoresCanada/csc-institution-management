@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Schema Analysis</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        pre { background: #f5f5f5; padding: 20px; overflow-x: auto; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Notion Schema Analysis</h1>
+    <button onclick="analyzeSchema()">Fetch Schema</button>
+    <pre id="output">Click button to fetch schema...</pre>
+
+    <script>
+        async function analyzeSchema() {
+            const output = document.getElementById('output');
+            output.textContent = 'Fetching schema...';
+
+            try {
+                const sessionToken = sessionStorage.getItem('csc_session');
+                if (!sessionToken) {
+                    output.textContent = 'Error: No session token found. Please log in first at /manage';
+                    return;
+                }
+
+                const response = await fetch('/api/analyze-notion-schema', {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    output.textContent = `Error ${response.status}: ${error}`;
+                    return;
+                }
+
+                const data = await response.json();
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
