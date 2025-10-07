@@ -2269,17 +2269,24 @@
                 window.userRole = userData.csc.role; // 'primary' or 'member'
 
                 // Load organization and team data
+                console.log('🔄 Loading organization data...');
                 await loadOrganizationData();
+                console.log('✅ Organization data loaded');
+
                 initializeDropdown();
+                console.log('✅ Dropdown initialized');
 
                 // Initialize My Team tab data immediately
                 initializeStep3();
+                console.log('✅ Step 3 initialized');
 
                 // Show the first tab (My Profile)
                 switchTab(1);
+                console.log('✅ Switched to tab 1');
 
                 // Hide loading state and show content - do this LAST
                 hideLoadingState();
+                console.log('✅ Loading state hidden, content should be visible');
 
             } catch (error) {
                 console.error('❌ Error initializing:', error);
