@@ -21,7 +21,7 @@
             output.textContent = 'Fetching schema...';
 
             try {
-                const sessionToken = sessionStorage.getItem('csc_session');
+                const sessionToken = sessionStorage.getItem('csc_session_token');
                 if (!sessionToken) {
                     output.textContent = 'Error: No session token found. Please log in first at /manage';
                     return;
