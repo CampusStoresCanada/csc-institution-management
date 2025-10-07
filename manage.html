@@ -4273,30 +4273,23 @@
             const isCurrentUser = contact.isCurrentUser;
 
             if (!isPrimary && !isCurrentUser) {
-                // Non-primary user trying to edit someone else - offer to report
-                const confirmReport = confirm(
-                    `You don't have permission to edit ${contact.name}'s information.\n\n` +
-                    `Would you like to report an issue with their contact details to the primary contact?`
+                // Non-primary user trying to edit someone else - go straight to report
+                const message = prompt(
+                    `Reporting issue with ${contact.name}'s contact information:\n\n` +
+                    `Please describe what needs to be changed:`
                 );
 
-                if (confirmReport) {
-                    const message = prompt(
-                        `Reporting issue with ${contact.name}'s contact information:\n\n` +
-                        `Please describe what needs to be changed:`
-                    );
+                if (message && message.trim()) {
+                    reportCart.items.push({
+                        fieldName: `contact_${contact.id}`,
+                        fieldLabel: `${contact.name}'s Contact Info`,
+                        currentValue: `${contact.email || ''}, ${contact.phone || ''}`,
+                        issueDescription: message.trim()
+                    });
+                    reportCart.count++;
+                    updateReportIndicator();
 
-                    if (message && message.trim()) {
-                        reportCart.items.push({
-                            fieldName: `contact_${contact.id}`,
-                            fieldLabel: `${contact.name}'s Contact Info`,
-                            currentValue: `${contact.email || ''}, ${contact.phone || ''}`,
-                            issueDescription: message.trim()
-                        });
-                        reportCart.count++;
-                        updateReportIndicator();
-
-                        alert(`Issue reported for ${contact.name}. Click the triangle icon in the top-right to review and send your report.`);
-                    }
+                    alert(`Issue reported for ${contact.name}. Click the triangle icon in the top-right to review and send your report.`);
                 }
                 return;
             }

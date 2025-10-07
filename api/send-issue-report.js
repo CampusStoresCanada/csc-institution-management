@@ -131,21 +131,60 @@ export default async function handler(req, res) {
 
 
     // Step 2: Format email content
-    const issuesList = issues.map((issue, idx) =>
-      `${idx + 1}. **${issue.fieldLabel}**\n` +
-      `   Current value: ${issue.currentValue}\n` +
-      `   Issue: ${issue.issueDescription}\n`
-    ).join('\n');
+    const issuesListHTML = issues.map((issue, idx) =>
+      `<tr>
+        <td style="padding: 15px; border-bottom: 1px solid #e0e0e0;">
+          <strong style="color: #0071bc; font-size: 16px;">${issue.fieldLabel}</strong><br>
+          <span style="color: #666; font-size: 14px;">Current value: ${issue.currentValue}</span><br>
+          <span style="color: #333; font-size: 14px; margin-top: 5px; display: block;">Issue: ${issue.issueDescription}</span>
+        </td>
+      </tr>`
+    ).join('');
 
     const emailSubject = `Organization Data Issues - ${organizationName}`;
-    const emailBody = `
+    const emailBodyHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <h2 style="color: #0071bc; margin: 0 0 10px 0;">Organization Data Issues</h2>
+    <p style="margin: 0; color: #666;">Hello ${primaryContact.name},</p>
+  </div>
+
+  <p style="font-size: 16px; color: #333;">
+    <strong>${reporterName}</strong> (${reporterEmail}) has reported <strong>${issues.length} issue(s)</strong> with your organization's data in the CSC Institution Management system.
+  </p>
+
+  <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; margin: 20px 0;">
+    ${issuesListHTML}
+  </table>
+
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="https://csc-institution-management.vercel.app/manage"
+       style="display: inline-block; background: #0071bc; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px;">
+      Review and Update Information
+    </a>
+  </div>
+
+  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
+    This is an automated message from CSC Institution Management.
+  </div>
+</body>
+</html>`;
+
+    const emailBodyText = `
 Hello ${primaryContact.name},
 
 ${reporterName} (${reporterEmail}) has reported ${issues.length} issue(s) with your organization's data in the CSC Institution Management system.
 
-${issuesList}
+${issues.map((issue, idx) =>
+  `${idx + 1}. ${issue.fieldLabel}\n   Current value: ${issue.currentValue}\n   Issue: ${issue.issueDescription}`
+).join('\n\n')}
 
-Please review and update these fields as needed.
+Review and update: https://csc-institution-management.vercel.app/manage
 
 ---
 This is an automated message from CSC Institution Management.
@@ -173,8 +212,12 @@ This is an automated message from CSC Institution Management.
           Charset: 'UTF-8'
         },
         Body: {
+          Html: {
+            Data: emailBodyHTML,
+            Charset: 'UTF-8'
+          },
           Text: {
-            Data: emailBody,
+            Data: emailBodyText,
             Charset: 'UTF-8'
           }
         }
