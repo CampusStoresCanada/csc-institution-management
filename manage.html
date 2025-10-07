@@ -4124,10 +4124,12 @@
                 fieldElement.style.borderRadius = '8px';
             }
 
+            // Update indicator first so it's visible and we can get its position
+            updateReportIndicator();
+
             // Animate issue flying to report cart
             animateIssueToCart();
 
-            updateReportIndicator();
             closeReportIssueModal();
         }
 
