@@ -3362,7 +3362,9 @@
 
         function hideLoadingState() {
             document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('wizardContent').style.display = 'flex';
+            const wizardContent = document.getElementById('wizardContent');
+            wizardContent.style.display = 'flex';
+            wizardContent.classList.add('loaded'); // Fade in via CSS opacity transition
         }
 
         function showErrorState(message) {
