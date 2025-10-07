@@ -178,6 +178,16 @@ body::before {
     align-items: center;
     margin-bottom: 2vw;
     padding: 0.8vw 0;
+    transition: all 0.2s ease;
+}
+
+.step-item:hover:not(.active) {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    margin-left: -0.5vw;
+    margin-right: -0.5vw;
+    padding-left: 0.5vw;
+    padding-right: 0.5vw;
 }
 
 .step-number {
@@ -203,6 +213,16 @@ body::before {
 }
 
 /* Active step styling */
+.step-item.active {
+    background: linear-gradient(90deg, rgba(186, 0, 59, 0.1) 0%, rgba(186, 0, 59, 0.05) 100%);
+    border-left: 4px solid #ba003b;
+    padding-left: calc(0.8vw - 4px);
+    border-radius: 8px;
+    margin-left: -0.5vw;
+    margin-right: -0.5vw;
+    padding-right: 0.5vw;
+}
+
 .step-item.active .step-number svg {
     fill: #ba003b !important;
 }
