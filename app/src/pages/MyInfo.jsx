@@ -76,22 +76,22 @@ export default function MyInfo() {
         description="This information is always editable by you."
       >
         <FieldGroup>
-          <ContactFields.Name
+          <ContactFields.ContactName
             value={userData.name}
             editable
             onEdit={() => openEditModal('name', userData.name)}
           />
-          <ContactFields.Email
+          <ContactFields.ContactEmail
             value={userData.email}
             editable
             onEdit={() => openEditModal('email', userData.email)}
           />
-          <ContactFields.Phone
+          <ContactFields.ContactPhone
             value={userData.phone}
             editable
             onEdit={() => openEditModal('phone', userData.phone)}
           />
-          <ContactFields.Title
+          <ContactFields.ContactTitle
             value={userData.title}
             editable
             onEdit={() => openEditModal('title', userData.title)}
