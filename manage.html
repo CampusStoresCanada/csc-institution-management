@@ -253,7 +253,7 @@
             <!-- Main Content -->
             <div class="main-content">
                 <!-- Floating Report Indicator -->
-                <div id="reportIndicator" style="display: none; position: fixed; top: 40px; right: 40px; cursor: pointer; z-index: 1000;" onclick="openReportReviewModal()" title="Click to review and submit your report">
+                <div id="reportIndicator" style="display: none; position: fixed; top: 40px; right: 40px; cursor: pointer; z-index: 1000; transition: transform 0.2s ease;" onclick="openReportReviewModal()" title="Click to review and submit your report">
                     <div style="position: relative; width: 60px; height: 60px;">
                         <img src="Report.svg" width="60" height="60" alt="Report Issues" style="filter: drop-shadow(0 0 8px rgba(255, 191, 0, 0.8)); animation: glowPulse 2s ease-in-out infinite;">
                         <div id="reportCountText" style="position: absolute; top: 2px; right: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: bold; font-family: Arial, sans-serif; pointer-events: none;">0</div>
@@ -4041,6 +4041,55 @@
             pendingReport = { fieldName: null, fieldLabel: null, currentValue: null };
         }
 
+        function animateIssueToCart() {
+            const modal = document.getElementById('reportIssueModal');
+            const reportIndicator = document.getElementById('reportIndicator');
+
+            if (!modal || !reportIndicator) return;
+
+            // Get positions
+            const modalRect = modal.querySelector('.modal-container').getBoundingClientRect();
+            const indicatorRect = reportIndicator.getBoundingClientRect();
+
+            // Create flying element
+            const flyingElement = document.createElement('div');
+            flyingElement.style.position = 'fixed';
+            flyingElement.style.left = modalRect.left + modalRect.width / 2 + 'px';
+            flyingElement.style.top = modalRect.top + modalRect.height / 2 + 'px';
+            flyingElement.style.width = '40px';
+            flyingElement.style.height = '40px';
+            flyingElement.style.background = '#ffc107';
+            flyingElement.style.borderRadius = '50%';
+            flyingElement.style.zIndex = '10000';
+            flyingElement.style.pointerEvents = 'none';
+            flyingElement.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            flyingElement.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.5)';
+            flyingElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white; font-weight: bold; font-size: 20px;">!</div>';
+
+            document.body.appendChild(flyingElement);
+
+            // Trigger animation
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    flyingElement.style.left = indicatorRect.left + indicatorRect.width / 2 + 'px';
+                    flyingElement.style.top = indicatorRect.top + indicatorRect.height / 2 + 'px';
+                    flyingElement.style.transform = 'scale(0.3)';
+                    flyingElement.style.opacity = '0';
+                });
+            });
+
+            // Remove element after animation
+            setTimeout(() => {
+                document.body.removeChild(flyingElement);
+
+                // Pulse the indicator
+                reportIndicator.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    reportIndicator.style.transform = 'scale(1)';
+                }, 200);
+            }, 600);
+        }
+
         function submitReportIssue() {
             const message = document.getElementById('reportIssueInput').value.trim();
 
@@ -4073,6 +4122,9 @@
                 fieldElement.style.boxShadow = '0 0 0 3px #ffc107';
                 fieldElement.style.borderRadius = '8px';
             }
+
+            // Animate issue flying to report cart
+            animateIssueToCart();
 
             updateReportIndicator();
             closeReportIssueModal();
