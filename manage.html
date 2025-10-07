@@ -2271,7 +2271,9 @@
                 // Load organization and team data
                 await loadOrganizationData();
                 initializeDropdown();
-                showWelcomeScreen();
+
+                // Initialize My Team tab data immediately
+                initializeStep3();
 
             } catch (error) {
                 console.error('❌ Error initializing:', error);
@@ -2305,12 +2307,6 @@
             } else if (tabNumber === 2) {
                 // My Team tab
                 document.getElementById('step2Section').classList.add('active');
-
-                // Initialize My Team if not already done
-                if (!initializedSteps.has(2)) {
-                    initializeStep3();
-                    initializedSteps.add(2);
-                }
             }
 
             currentStep = tabNumber;
