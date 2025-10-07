@@ -2616,6 +2616,65 @@ body::before {
         background: #f8f9fa;
     }
 
+    .step-navigation {
+        display: flex;
+        flex-direction: row;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .step-item {
+        flex: 1;
+        margin-bottom: 0;
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .step-item.active {
+        background: #ba003b;
+        border-color: #ba003b;
+        border-left: 2px solid #ba003b;
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .step-item.active .step-title {
+        color: white;
+    }
+
+    .step-item.active .step-number svg {
+        fill: white !important;
+    }
+
+    .step-item:hover:not(.active) {
+        background: #f0f0f0;
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .step-number {
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+    }
+
+    .step-number svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .step-title {
+        font-size: 14px;
+    }
+
     .main-content {
         padding: 24px 20px 120px 20px;
         flex: 1;
