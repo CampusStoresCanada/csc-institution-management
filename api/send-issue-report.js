@@ -163,9 +163,9 @@ This is an automated message from CSC Institution Management.
     });
 
     const sendEmailCommand = new SendEmailCommand({
-      Source: process.env.SES_FROM_EMAIL || 'steve@campusstores.ca',
+      Source: process.env.SES_FROM_EMAIL || 'google@campusstores.ca',
       Destination: {
-        ToAddresses: ['stephen@mcphersonmanagement.com'] // TEMP: Testing - normally primaryContact.email
+        ToAddresses: ['google@campusstores.ca'] // TEMP: Testing - normally primaryContact.email
       },
       Message: {
         Subject: {
