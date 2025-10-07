@@ -4053,11 +4053,12 @@
 
             // Create flying element
             const flyingElement = document.createElement('div');
+            const size = 40;
             flyingElement.style.position = 'fixed';
-            flyingElement.style.left = modalRect.left + modalRect.width / 2 + 'px';
-            flyingElement.style.top = modalRect.top + modalRect.height / 2 + 'px';
-            flyingElement.style.width = '40px';
-            flyingElement.style.height = '40px';
+            flyingElement.style.left = (modalRect.left + modalRect.width / 2 - size / 2) + 'px';
+            flyingElement.style.top = (modalRect.top + modalRect.height / 2 - size / 2) + 'px';
+            flyingElement.style.width = size + 'px';
+            flyingElement.style.height = size + 'px';
             flyingElement.style.background = '#ffc107';
             flyingElement.style.borderRadius = '50%';
             flyingElement.style.zIndex = '10000';
@@ -4071,8 +4072,8 @@
             // Trigger animation
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    flyingElement.style.left = indicatorRect.left + indicatorRect.width / 2 + 'px';
-                    flyingElement.style.top = indicatorRect.top + indicatorRect.height / 2 + 'px';
+                    flyingElement.style.left = (indicatorRect.left + indicatorRect.width / 2 - size / 2) + 'px';
+                    flyingElement.style.top = (indicatorRect.top + indicatorRect.height / 2 - size / 2) + 'px';
                     flyingElement.style.transform = 'scale(0.3)';
                     flyingElement.style.opacity = '0';
                 });
