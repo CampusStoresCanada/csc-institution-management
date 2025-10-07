@@ -2278,6 +2278,9 @@
                 // Hide loading state and show content
                 hideLoadingState();
 
+                // Show the first tab (My Profile)
+                switchTab(1);
+
             } catch (error) {
                 console.error('❌ Error initializing:', error);
                 showErrorState('Unable to load your profile information. Please try again later.');
