@@ -2275,11 +2275,11 @@
                 // Initialize My Team tab data immediately
                 initializeStep3();
 
-                // Hide loading state and show content
-                hideLoadingState();
-
                 // Show the first tab (My Profile)
                 switchTab(1);
+
+                // Hide loading state and show content - do this LAST
+                hideLoadingState();
 
             } catch (error) {
                 console.error('❌ Error initializing:', error);
