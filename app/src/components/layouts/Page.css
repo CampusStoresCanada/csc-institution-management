@@ -1,0 +1,13 @@
+.csc-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: var(--content-padding-desktop);
+  background: var(--color-bg-white);
+}
+
+@media (max-width: 768px) {
+  .csc-page {
+    padding: var(--content-padding-mobile);
+    padding-bottom: 120px; /* Extra space for mobile nav */
+  }
+}

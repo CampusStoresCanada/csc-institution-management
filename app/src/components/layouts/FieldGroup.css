@@ -1,0 +1,11 @@
+.csc-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--field-gap-vertical);
+}
+
+@media (max-width: 768px) {
+  .csc-field-group {
+    gap: var(--space-xl);
+  }
+}

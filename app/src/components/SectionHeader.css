@@ -1,5 +1,5 @@
 .csc-section-header {
-  margin-bottom: var(--space-2xl);
+  margin: 0;
 }
 
 .csc-section-header-title {
@@ -32,10 +32,6 @@
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
-  .csc-section-header {
-    margin-bottom: var(--space-xl);
-  }
-
   .csc-section-header--level-1 .csc-section-header-title {
     font-size: var(--text-2xl);
   }

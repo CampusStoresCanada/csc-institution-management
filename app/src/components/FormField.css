@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: var(--space-sm);
   width: 100%;
-  margin-bottom: var(--space-lg);
+  margin: 0;
 }
 
 .csc-form-field-label {
@@ -80,10 +80,6 @@
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
-  .csc-form-field {
-    margin-bottom: var(--space-2xl);
-  }
-
   .csc-form-field-content {
     gap: var(--space-sm);
   }

@@ -1,0 +1,28 @@
+.csc-section {
+  margin: 0;
+  margin-bottom: var(--section-margin-bottom);
+}
+
+.csc-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Spacing between header and content */
+.csc-section-content {
+  margin-top: var(--space-xl);
+}
+
+/* If no header, no top margin */
+.csc-section:not(:has(.csc-section-header)) .csc-section-content {
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .csc-section {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .csc-section-content {
+    margin-top: var(--space-lg);
+  }
+}
