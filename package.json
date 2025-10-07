@@ -17,6 +17,7 @@
     "@vercel/node": "^2.0.0"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.901.0",
     "@circleco/headless-server-sdk": "^0.0.5"
   }
 }

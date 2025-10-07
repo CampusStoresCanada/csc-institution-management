@@ -151,10 +151,37 @@ Please review and update these fields as needed.
 This is an automated message from CSC Institution Management.
 `;
 
-    // Step 3: Send email (placeholder - would use SendGrid, SES, etc.)
+    // Step 3: Send email via AWS SES
+    const { SESClient, SendEmailCommand } = await import('@aws-sdk/client-ses');
 
-    // TODO: Integrate with actual email service (SendGrid, AWS SES, etc.)
-    // For now, just log the email content
+    const sesClient = new SESClient({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
+
+    const sendEmailCommand = new SendEmailCommand({
+      Source: process.env.SES_FROM_EMAIL || 'steve@campusstores.ca',
+      Destination: {
+        ToAddresses: [primaryContact.email]
+      },
+      Message: {
+        Subject: {
+          Data: emailSubject,
+          Charset: 'UTF-8'
+        },
+        Body: {
+          Text: {
+            Data: emailBody,
+            Charset: 'UTF-8'
+          }
+        }
+      }
+    });
+
+    await sesClient.send(sendEmailCommand);
 
     res.status(200).json({
       success: true,
