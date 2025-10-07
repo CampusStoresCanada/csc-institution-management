@@ -149,6 +149,12 @@ export default async function handler(req, res) {
   <meta charset="UTF-8">
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="https://images.squarespace-cdn.com/content/v1/5ec55d5d28a93e0e18d2eeb4/1600096854522-HS7NUI12I1ML6SPJFLLY/Artboard+1.png?format=300w"
+         alt="Campus Stores Canada"
+         style="width: 80px; height: 80px; object-fit: contain;">
+  </div>
+
   <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
     <h2 style="color: #0071bc; margin: 0 0 10px 0;">Organization Data Issues</h2>
     <p style="margin: 0; color: #666;">Hello ${primaryContact.name},</p>
@@ -169,8 +175,16 @@ export default async function handler(req, res) {
     </a>
   </div>
 
-  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
-    This is an automated message from CSC Institution Management.
+  <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px; color: #666; font-size: 12px; line-height: 1.8;">
+    <p style="margin: 0 0 10px 0; color: #333; font-weight: 500;">You received this email from Campus Stores Canada</p>
+    <p style="margin: 0 0 10px 0;">P.O. Box 71157, Silver Springs<br>Calgary, Alberta T3G 5K2</p>
+    <p style="margin: 0 0 10px 0;">
+      If you believe you have received this email in error, please contact us at
+      <a href="mailto:info@campusstores.ca" style="color: #0071bc; text-decoration: none;">info@campusstores.ca</a>
+    </p>
+    <p style="margin: 10px 0 0 0; padding-top: 10px; border-top: 1px solid #e0e0e0; color: #999; font-size: 11px;">
+      This is an automated notification from the CSC Institution Management system. You are receiving this because you are listed as the primary contact for ${organizationName}.
+    </p>
   </div>
 </body>
 </html>`;
@@ -187,7 +201,13 @@ ${issues.map((issue, idx) =>
 Review and update: https://csc-institution-management.vercel.app/manage
 
 ---
-This is an automated message from CSC Institution Management.
+You received this email from Campus Stores Canada
+P.O. Box 71157, Silver Springs
+Calgary, Alberta T3G 5K2
+
+If you believe you have received this email in error, please contact us at info@campusstores.ca
+
+This is an automated notification from the CSC Institution Management system. You are receiving this because you are listed as the primary contact for ${organizationName}.
 `;
 
     // Step 3: Send email via AWS SES
