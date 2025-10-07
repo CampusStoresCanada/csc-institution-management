@@ -72,8 +72,8 @@ export default async function handler(req, res) {
 
     const contactsDb = await contactsDbResponse.json();
 
-    // Query a few organizations to see actual data patterns
-    const orgQueryResponse = await fetch(`https://api.notion.com/v1/databases/${organizationsDbId}/query`, {
+    // Query Members
+    const memberQueryResponse = await fetch(`https://api.notion.com/v1/databases/${organizationsDbId}/query`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${notionToken}`,
@@ -81,28 +81,57 @@ export default async function handler(req, res) {
         'Notion-Version': '2022-06-28'
       },
       body: JSON.stringify({
-        page_size: 10
+        filter: {
+          property: 'Organization Type',
+          select: {
+            equals: 'Member'
+          }
+        },
+        page_size: 5
       })
     });
 
-    if (!orgQueryResponse.ok) {
-      throw new Error(`Notion API error querying organizations: ${orgQueryResponse.status}`);
+    if (!memberQueryResponse.ok) {
+      throw new Error(`Notion API error querying members: ${memberQueryResponse.status}`);
     }
 
-    const orgQueryData = await orgQueryResponse.json();
+    const memberQueryData = await memberQueryResponse.json();
+
+    // Query Partners (Vendor Partner)
+    const partnerQueryResponse = await fetch(`https://api.notion.com/v1/databases/${organizationsDbId}/query`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28'
+      },
+      body: JSON.stringify({
+        filter: {
+          property: 'Organization Type',
+          select: {
+            equals: 'Vendor Partner'
+          }
+        },
+        page_size: 5
+      })
+    });
+
+    if (!partnerQueryResponse.ok) {
+      throw new Error(`Notion API error querying partners: ${partnerQueryResponse.status}`);
+    }
+
+    const partnerQueryData = await partnerQueryResponse.json();
 
     // Analyze property usage by organization type
     const memberOrgs = [];
     const partnerOrgs = [];
+    const memberPropsUsed = new Set();
+    const partnerPropsUsed = new Set();
 
-    orgQueryData.results.forEach(org => {
-      const orgType = org.properties['Organization Type']?.select?.name ||
-                      org.properties['Type']?.select?.name ||
-                      org.properties['Member Type']?.select?.name;
-
+    memberQueryData.results.forEach(org => {
       const orgData = {
         name: org.properties.Organization?.title?.[0]?.text?.content || 'Unnamed',
-        type: orgType,
+        type: 'Member',
         properties: Object.keys(org.properties).reduce((acc, key) => {
           const prop = org.properties[key];
           let value = null;
@@ -116,20 +145,49 @@ export default async function handler(req, res) {
           else if (prop.email) value = prop.email;
           else if (prop.phone_number) value = prop.phone_number;
           else if (prop.checkbox) value = prop.checkbox;
+          else if (prop.date) value = prop.date?.start;
           else if (prop.relation) value = `[${prop.relation.length} relations]`;
+          else if (prop.files) value = `[${prop.files.length} files]`;
 
-          if (value !== null && value !== '' && value !== false) {
+          if (value !== null && value !== '' && value !== false && !(Array.isArray(value) && value.length === 0)) {
             acc[key] = value;
+            memberPropsUsed.add(key);
           }
           return acc;
         }, {})
       };
+      memberOrgs.push(orgData);
+    });
 
-      if (orgType === 'Member') {
-        memberOrgs.push(orgData);
-      } else if (orgType === 'Partner') {
-        partnerOrgs.push(orgData);
-      }
+    partnerQueryData.results.forEach(org => {
+      const orgData = {
+        name: org.properties.Organization?.title?.[0]?.text?.content || 'Unnamed',
+        type: 'Vendor Partner',
+        properties: Object.keys(org.properties).reduce((acc, key) => {
+          const prop = org.properties[key];
+          let value = null;
+
+          // Extract value based on property type
+          if (prop.title?.[0]) value = prop.title[0].text.content;
+          else if (prop.rich_text?.[0]) value = prop.rich_text[0].text.content;
+          else if (prop.select) value = prop.select.name;
+          else if (prop.multi_select) value = prop.multi_select.map(s => s.name);
+          else if (prop.url) value = prop.url;
+          else if (prop.email) value = prop.email;
+          else if (prop.phone_number) value = prop.phone_number;
+          else if (prop.checkbox) value = prop.checkbox;
+          else if (prop.date) value = prop.date?.start;
+          else if (prop.relation) value = `[${prop.relation.length} relations]`;
+          else if (prop.files) value = `[${prop.files.length} files]`;
+
+          if (value !== null && value !== '' && value !== false && !(Array.isArray(value) && value.length === 0)) {
+            acc[key] = value;
+            partnerPropsUsed.add(key);
+          }
+          return acc;
+        }, {})
+      };
+      partnerOrgs.push(orgData);
     });
 
     res.status(200).json({
@@ -158,6 +216,11 @@ export default async function handler(req, res) {
             options: contactsDb.properties[key].multi_select.options.map(o => o.name)
           })
         }))
+      },
+      propertyUsage: {
+        memberOnly: Array.from(memberPropsUsed).filter(p => !partnerPropsUsed.has(p)),
+        partnerOnly: Array.from(partnerPropsUsed).filter(p => !memberPropsUsed.has(p)),
+        sharedProperties: Array.from(memberPropsUsed).filter(p => partnerPropsUsed.has(p))
       },
       sampleData: {
         memberOrganizations: memberOrgs,
