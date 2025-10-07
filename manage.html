@@ -2275,6 +2275,9 @@
                 // Initialize My Team tab data immediately
                 initializeStep3();
 
+                // Hide loading state and show content
+                hideLoadingState();
+
             } catch (error) {
                 console.error('❌ Error initializing:', error);
                 showErrorState('Unable to load your profile information. Please try again later.');
