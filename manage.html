@@ -3398,8 +3398,6 @@
         // DATA LOADING
         // ===========================================
         async function loadOrganizationData() {
-            showLoadingState();
-
             try {
                 const response = await fetch(`${API_BASE}/get-organization`, {
                     headers: {
