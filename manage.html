@@ -4001,6 +4001,12 @@
             count: 0
         };
 
+        let pendingReport = {
+            fieldName: null,
+            fieldLabel: null,
+            currentValue: null
+        };
+
         function updateReportIndicator() {
             const indicator = document.getElementById('reportIndicator');
             const countText = document.getElementById('reportCountText');
@@ -4014,40 +4020,62 @@
         }
 
         function addToReportCart(fieldName, fieldLabel, currentValue) {
-            const message = prompt(
-                `You don't have permission to edit "${fieldLabel}".\n\n` +
-                `Current value: ${currentValue || '(empty)'}\n\n` +
-                `Please describe what needs to be changed:`
-            );
+            // Open modal instead of prompt
+            pendingReport.fieldName = fieldName;
+            pendingReport.fieldLabel = fieldLabel;
+            pendingReport.currentValue = currentValue || '(empty)';
 
-            if (message && message.trim()) {
-                // Check if this field is already in the cart
-                const existingIndex = reportCart.items.findIndex(item => item.fieldName === fieldName);
+            document.getElementById('reportFieldLabel').textContent = fieldLabel;
+            document.getElementById('reportCurrentValue').textContent = currentValue || '(empty)';
+            document.getElementById('reportIssueInput').value = '';
+            document.getElementById('reportIssueModal').style.display = 'flex';
 
-                if (existingIndex >= 0) {
-                    // Update existing item
-                    reportCart.items[existingIndex].issueDescription = message.trim();
-                } else {
-                    // Add new item
-                    reportCart.items.push({
-                        fieldName,
-                        fieldLabel,
-                        currentValue: currentValue || '(empty)',
-                        issueDescription: message.trim()
-                    });
-                    reportCart.count++;
-                }
+            // Focus the textarea
+            setTimeout(() => {
+                document.getElementById('reportIssueInput').focus();
+            }, 100);
+        }
 
-                // Highlight the field with amber (using box-shadow to avoid layout shift)
-                const fieldElement = document.querySelector(`[data-field="${fieldName}"]`);
-                if (fieldElement) {
-                    fieldElement.style.background = '#fff3cd';
-                    fieldElement.style.boxShadow = '0 0 0 3px #ffc107';
-                    fieldElement.style.borderRadius = '8px';
-                }
+        function closeReportIssueModal() {
+            document.getElementById('reportIssueModal').style.display = 'none';
+            pendingReport = { fieldName: null, fieldLabel: null, currentValue: null };
+        }
 
-                updateReportIndicator();
+        function submitReportIssue() {
+            const message = document.getElementById('reportIssueInput').value.trim();
+
+            if (!message) {
+                alert('Please describe what needs to be changed.');
+                return;
             }
+
+            // Check if this field is already in the cart
+            const existingIndex = reportCart.items.findIndex(item => item.fieldName === pendingReport.fieldName);
+
+            if (existingIndex >= 0) {
+                // Update existing item
+                reportCart.items[existingIndex].issueDescription = message;
+            } else {
+                // Add new item
+                reportCart.items.push({
+                    fieldName: pendingReport.fieldName,
+                    fieldLabel: pendingReport.fieldLabel,
+                    currentValue: pendingReport.currentValue,
+                    issueDescription: message
+                });
+                reportCart.count++;
+            }
+
+            // Highlight the field with amber (using box-shadow to avoid layout shift)
+            const fieldElement = document.querySelector(`[data-field="${pendingReport.fieldName}"]`);
+            if (fieldElement) {
+                fieldElement.style.background = '#fff3cd';
+                fieldElement.style.boxShadow = '0 0 0 3px #ffc107';
+                fieldElement.style.borderRadius = '8px';
+            }
+
+            updateReportIndicator();
+            closeReportIssueModal();
         }
 
         function openReportReviewModal() {
@@ -4225,12 +4253,12 @@
         
         function setupModalFieldHandlers() {
             const fields = ['name', 'title', 'email', 'phone', 'dietary'];
-            
+
             fields.forEach(fieldName => {
                 const input = document.getElementById(`${fieldName}Input`);
                 const border = document.getElementById(`${fieldName}Border`);
                 const label = document.getElementById(`${fieldName}Label`);
-                
+
                 if (input && border && label) {
                     input.addEventListener('focus', () => {
                         border.classList.remove('unfocused');
@@ -4238,20 +4266,41 @@
                         label.classList.remove('unfocused');
                         label.classList.add('focused');
                     });
-                    
+
                     input.addEventListener('blur', () => {
                         border.classList.remove('focused');
                         border.classList.add('unfocused');
                         label.classList.remove('focused');
                         label.classList.add('unfocused');
                     });
-                    
+
                     // Store form data as user types
                     input.addEventListener('input', () => {
                         modalState.formData[fieldName] = input.value;
                     });
                 }
             });
+
+            // Report issue modal field handler
+            const reportInput = document.getElementById('reportIssueInput');
+            const reportBorder = document.getElementById('reportIssueBorder');
+            const reportLabel = document.getElementById('reportIssueLabel');
+
+            if (reportInput && reportBorder && reportLabel) {
+                reportInput.addEventListener('focus', () => {
+                    reportBorder.classList.remove('unfocused');
+                    reportBorder.classList.add('focused');
+                    reportLabel.classList.remove('unfocused');
+                    reportLabel.classList.add('focused');
+                });
+
+                reportInput.addEventListener('blur', () => {
+                    reportBorder.classList.remove('focused');
+                    reportBorder.classList.add('unfocused');
+                    reportLabel.classList.remove('focused');
+                    reportLabel.classList.add('unfocused');
+                });
+            }
         }
         
         function openEditContactModal(contactId, contactIndex) {
@@ -4273,24 +4322,21 @@
             const isCurrentUser = contact.isCurrentUser;
 
             if (!isPrimary && !isCurrentUser) {
-                // Non-primary user trying to edit someone else - go straight to report
-                const message = prompt(
-                    `Reporting issue with ${contact.name}'s contact information:\n\n` +
-                    `Please describe what needs to be changed:`
-                );
+                // Non-primary user trying to edit someone else - use modal for report
+                pendingReport.fieldName = `contact_${contact.id}`;
+                pendingReport.fieldLabel = `${contact.name}'s Contact Info`;
+                pendingReport.currentValue = `${contact.email || ''}, ${contact.phone || ''}`;
 
-                if (message && message.trim()) {
-                    reportCart.items.push({
-                        fieldName: `contact_${contact.id}`,
-                        fieldLabel: `${contact.name}'s Contact Info`,
-                        currentValue: `${contact.email || ''}, ${contact.phone || ''}`,
-                        issueDescription: message.trim()
-                    });
-                    reportCart.count++;
-                    updateReportIndicator();
+                document.getElementById('reportModalTitle').textContent = `Report Issue with ${contact.name}`;
+                document.getElementById('reportFieldLabel').textContent = `${contact.name}'s Contact Info`;
+                document.getElementById('reportCurrentValue').textContent = pendingReport.currentValue || '(empty)';
+                document.getElementById('reportIssueInput').value = '';
+                document.getElementById('reportIssueModal').style.display = 'flex';
 
-                    alert(`Issue reported for ${contact.name}. Click the triangle icon in the top-right to review and send your report.`);
-                }
+                // Focus the textarea
+                setTimeout(() => {
+                    document.getElementById('reportIssueInput').focus();
+                }, 100);
                 return;
             }
 
@@ -4562,6 +4608,40 @@
             }, 100);
         }
     </script>
+
+    <!-- Report Issue Modal -->
+    <div class="contact-modal" id="reportIssueModal" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title" id="reportModalTitle">Report an Issue</h3>
+            </div>
+            <div class="modal-form">
+                <div class="modal-field">
+                    <div class="modal-field-label" style="position: static; margin-bottom: 8px; color: #666;">Field</div>
+                    <div id="reportFieldLabel" style="padding: 12px; background: #f8f9fa; border-radius: 6px; margin-bottom: 16px; font-weight: 500;"></div>
+                </div>
+                <div class="modal-field">
+                    <div class="modal-field-label" style="position: static; margin-bottom: 8px; color: #666;">Current Value</div>
+                    <div id="reportCurrentValue" style="padding: 12px; background: #f8f9fa; border-radius: 6px; margin-bottom: 16px; color: #666;"></div>
+                </div>
+                <div class="modal-field">
+                    <div class="modal-field-border unfocused" id="reportIssueBorder">
+                        <div class="modal-field-label unfocused" id="reportIssueLabel">What needs to be changed?</div>
+                        <textarea
+                            id="reportIssueInput"
+                            class="modal-input"
+                            rows="4"
+                            style="resize: vertical; min-height: 100px;"
+                        ></textarea>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn secondary" onclick="closeReportIssueModal()">Cancel</button>
+                    <button type="button" class="modal-btn primary" onclick="submitReportIssue()">Add to Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Contact Modal (moved outside step sections) -->
     <div class="contact-modal" id="contactModal">
