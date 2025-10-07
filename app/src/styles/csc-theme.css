@@ -1,0 +1,180 @@
+/**
+ * CSC Brand Theme
+ * Overrides and extends the base design system with CSC-specific patterns
+ * Extracted from the hand-crafted aesthetics of the original design
+ */
+
+:root {
+  /* ==================== CSC BRAND OVERRIDES ==================== */
+
+  /* Primary maroon with exact shade */
+  --color-primary: #ba003b;
+  --color-primary-dark: #9a0030;
+  --color-primary-darker: #9e0032;
+
+  /* CSC-specific gradients */
+  --gradient-primary: linear-gradient(90deg, rgba(186, 0, 59, 0.1) 0%, rgba(186, 0, 59, 0.05) 100%);
+  --gradient-primary-solid: linear-gradient(135deg, #ba003b 0%, #9a0030 100%);
+
+  /* CSC Text Colors - refined from existing */
+  --color-text-primary: #000000;
+  --color-text-secondary: #666666;
+  --color-text-tertiary: #999999;
+  --color-text-quaternary: #888888;
+  --color-text-light: #808080;
+
+  /* ==================== CSC FIELD PATTERNS ==================== */
+
+  /* Organization Name Field - Large, Bold, Black */
+  --field-org-name-size: clamp(24px, 1.8vw, 32px);
+  --field-org-name-weight: 700;
+  --field-org-name-color: #000000;
+
+  /* Website/Secondary Field - Smaller, Lighter */
+  --field-secondary-size: clamp(14px, 1.0vw, 16px);
+  --field-secondary-weight: 400;
+  --field-secondary-color: #666666;
+
+  /* Description/Body Text */
+  --field-body-size: clamp(14px, 1.0vw, 16px);
+  --field-body-weight: 400;
+  --field-body-color: #666666;
+  --field-body-line-height: 1.5;
+
+  /* Labels - Small, Semibold, Primary Color */
+  --field-label-size: clamp(11px, 0.9vw, 13px);
+  --field-label-weight: 600;
+  --field-label-color: var(--color-primary);
+  --field-label-transform: uppercase;
+  --field-label-spacing: 0.5px;
+
+  /* ==================== CSC COMPONENT SIZING ==================== */
+
+  /* Edit buttons */
+  --edit-button-size-desktop: clamp(16px, 1.2vw, 20px);
+  --edit-button-size-mobile: 40px;
+  --edit-button-color: #999999;
+  --edit-button-hover-color: var(--color-primary);
+
+  /* Section headers */
+  --section-header-size: clamp(18px, 1.5vw, 24px);
+  --section-header-weight: 700;
+  --section-header-color: #000000;
+
+  /* ==================== CSC TAB NAVIGATION ==================== */
+
+  /* Desktop sidebar tabs */
+  --tab-desktop-padding: 0.8vw;
+  --tab-desktop-font-size: clamp(14px, 1.0vw, 16px);
+  --tab-desktop-font-weight: 700;
+  --tab-desktop-color: #666666;
+
+  /* Active tab styling */
+  --tab-active-bg: var(--gradient-primary);
+  --tab-active-border: 4px solid var(--color-primary);
+  --tab-active-color: var(--color-primary);
+  --tab-active-font-weight: 700;
+  --tab-active-radius: 8px;
+
+  /* Mobile horizontal tabs */
+  --tab-mobile-bg: #ffffff;
+  --tab-mobile-border: 2px solid #e0e0e0;
+  --tab-mobile-active-bg: var(--color-primary);
+  --tab-mobile-active-color: #ffffff;
+
+  /* ==================== CSC SPACING PATTERNS ==================== */
+
+  /* Content padding */
+  --content-padding-desktop: clamp(20px, 3vw, 48px);
+  --content-padding-mobile: 16px;
+
+  /* Field spacing */
+  --field-gap-vertical: clamp(16px, 1.5vw, 24px);
+  --field-gap-horizontal: clamp(8px, 0.8vw, 12px);
+
+  /* Section spacing */
+  --section-margin-bottom: clamp(24px, 2vw, 40px);
+}
+
+/* ==================== CSC PRESET CLASSES ==================== */
+
+/* Organization Name Field */
+.csc-field--org-name {
+  font-size: var(--field-org-name-size);
+  font-weight: var(--field-org-name-weight);
+  color: var(--field-org-name-color);
+  line-height: 1.2;
+}
+
+/* Website/Secondary Field */
+.csc-field--secondary {
+  font-size: var(--field-secondary-size);
+  font-weight: var(--field-secondary-weight);
+  color: var(--field-secondary-color);
+  line-height: 1.2;
+}
+
+/* Body/Description Field */
+.csc-field--body {
+  font-size: var(--field-body-size);
+  font-weight: var(--field-body-weight);
+  color: var(--field-body-color);
+  line-height: var(--field-body-line-height);
+}
+
+/* Field Labels */
+.csc-label {
+  font-size: var(--field-label-size);
+  font-weight: var(--field-label-weight);
+  color: var(--field-label-color);
+  text-transform: var(--field-label-transform);
+  letter-spacing: var(--field-label-spacing);
+}
+
+/* Section Headers */
+.csc-section-header {
+  font-size: var(--section-header-size);
+  font-weight: var(--section-header-weight);
+  color: var(--section-header-color);
+  margin-bottom: var(--space-lg);
+}
+
+/* Edit Button */
+.csc-edit-btn {
+  width: var(--edit-button-size-desktop);
+  height: var(--edit-button-size-desktop);
+  color: var(--edit-button-color);
+  transition: color var(--transition-base);
+}
+
+.csc-edit-btn:hover {
+  color: var(--edit-button-hover-color);
+}
+
+@media (max-width: 768px) {
+  .csc-edit-btn {
+    width: var(--edit-button-size-mobile);
+    height: var(--edit-button-size-mobile);
+  }
+}
+
+/* ==================== CSC LAYOUT PATTERNS ==================== */
+
+/* Content container with proper padding */
+.csc-content {
+  padding: var(--content-padding-desktop);
+}
+
+@media (max-width: 768px) {
+  .csc-content {
+    padding: var(--content-padding-mobile);
+  }
+}
+
+/* Field group spacing */
+.csc-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--field-gap-vertical);
+  margin-bottom: var(--section-margin-bottom);
+}
