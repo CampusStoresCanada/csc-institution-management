@@ -3902,9 +3902,6 @@
             }
 
             organizationContacts.forEach((contact, index) => {
-                    id: contact.id,
-                    name: contact.name,
-                    email: contact.email,
                 const contactElement = createContactElement(contact, index);
                 teamList.appendChild(contactElement);
             });
