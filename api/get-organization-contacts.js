@@ -216,11 +216,6 @@ export default async function handler(req, res) {
       userRole,
       currentUserId
     };
-      contactCount: teamMembers.length,
-      organizationName: session.csc.organization_name,
-      userRole,
-      currentUserId
-    });
     res.status(200).json(responseData);
 
   } catch (error) {
