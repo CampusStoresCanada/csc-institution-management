@@ -1,0 +1,50 @@
+.csc-section-header {
+  margin-bottom: var(--space-2xl);
+}
+
+.csc-section-header-title {
+  font-family: var(--font-primary);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--leading-tight);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.csc-section-header-description {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-normal);
+  margin: 0;
+}
+
+/* Level-specific sizing */
+.csc-section-header--level-1 .csc-section-header-title {
+  font-size: var(--text-3xl);
+}
+
+.csc-section-header--level-2 .csc-section-header-title {
+  font-size: var(--text-xl);
+}
+
+.csc-section-header--level-3 .csc-section-header-title {
+  font-size: var(--text-lg);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .csc-section-header {
+    margin-bottom: var(--space-xl);
+  }
+
+  .csc-section-header--level-1 .csc-section-header-title {
+    font-size: var(--text-2xl);
+  }
+
+  .csc-section-header--level-2 .csc-section-header-title {
+    font-size: var(--text-lg);
+  }
+
+  .csc-section-header-description {
+    font-size: var(--text-sm);
+  }
+}
