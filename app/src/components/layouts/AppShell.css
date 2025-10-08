@@ -1,0 +1,81 @@
+.csc-app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-bg-white);
+}
+
+.csc-app-sidebar {
+  width: 20%;
+  min-width: 250px;
+  background: var(--color-bg-white);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border-light);
+}
+
+.csc-app-header {
+  padding: var(--space-2xl) var(--space-xl);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.csc-logos {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.csc-logo-img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.csc-org-logo-img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.csc-org-name {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+  .csc-app-shell {
+    flex-direction: column;
+  }
+
+  .csc-app-sidebar {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .csc-app-header {
+    padding: var(--space-lg);
+  }
+
+  .csc-logos {
+    justify-content: center;
+  }
+
+  .csc-logo-img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .csc-org-logo-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .csc-org-name {
+    text-align: center;
+    font-size: var(--text-base);
+  }
+}

@@ -1,0 +1,101 @@
+/* Desktop Sidebar Tabs */
+.csc-tab-nav {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-xl);
+  gap: var(--space-sm);
+}
+
+.csc-tab-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--tab-desktop-padding);
+  background: transparent;
+  border: none;
+  border-radius: var(--tab-active-radius);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-align: left;
+  color: var(--tab-desktop-color);
+  font-size: var(--tab-desktop-font-size);
+  font-weight: var(--weight-medium);
+}
+
+.csc-tab-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.csc-tab-item.active {
+  background: var(--tab-active-bg);
+  border-left: var(--tab-active-border);
+  color: var(--tab-active-color);
+  font-weight: var(--tab-active-font-weight);
+  padding-left: calc(var(--tab-desktop-padding) - 4px); /* Compensate for border */
+}
+
+.csc-tab-icon {
+  font-size: var(--text-lg);
+}
+
+.csc-tab-label {
+  flex: 1;
+}
+
+/* Mobile Top Tabs */
+.csc-tab-nav-mobile {
+  display: none;
+}
+
+/* Tab Content Area */
+.csc-tab-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Mobile Layout */
+@media (max-width: 768px) {
+  /* Hide desktop nav */
+  .csc-tab-nav {
+    display: none;
+  }
+
+  /* Show mobile nav */
+  .csc-tab-nav-mobile {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .csc-tab-item-mobile {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--tab-mobile-bg);
+    border: var(--tab-mobile-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+  }
+
+  .csc-tab-item-mobile.active {
+    background: var(--tab-mobile-active-bg);
+    color: var(--tab-mobile-active-color);
+    border-color: var(--tab-mobile-active-bg);
+  }
+
+  .csc-tab-icon-mobile {
+    font-size: var(--text-lg);
+  }
+
+  .csc-tab-label-mobile {
+    font-size: var(--text-sm);
+  }
+}

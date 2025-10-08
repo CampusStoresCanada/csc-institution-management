@@ -20,7 +20,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="csc-modal-overlay" />
-        <Dialog.Content className="csc-modal-content">
+        <Dialog.Content className="csc-modal-content" aria-describedby={undefined}>
           <div className="csc-modal-header">
             <Dialog.Title className="csc-modal-title">{title}</Dialog.Title>
             <Dialog.Close className="csc-modal-close" aria-label="Close">
