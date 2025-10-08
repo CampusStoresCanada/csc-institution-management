@@ -28,12 +28,15 @@ function App() {
     }
   ];
 
+  const tabLayout = TabLayout({ tabs });
+
   return (
     <AppShell
       organizationName={organizationData.name}
       organizationLogo={organizationData.logo}
+      navigation={tabLayout.navigation}
     >
-      <TabLayout tabs={tabs} />
+      {tabLayout.content}
     </AppShell>
   );
 }

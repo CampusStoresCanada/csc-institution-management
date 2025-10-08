@@ -6,7 +6,7 @@ import './AppShell.css';
  * The outer frame for all CSC apps
  * Provides header with CSC logo, org logo, and org name
  */
-export default function AppShell({ organizationName, organizationLogo, children }) {
+export default function AppShell({ organizationName, organizationLogo, navigation, children }) {
   const CSC_LOGO = 'https://images.squarespace-cdn.com/content/v1/5ec55d5d28a93e0e18d2eeb4/1600096854522-HS7NUI12I1ML6SPJFLLY/Artboard+1.png?format=1500w';
 
   return (
@@ -31,6 +31,9 @@ export default function AppShell({ organizationName, organizationLogo, children 
             <div className="csc-org-name">{organizationName}</div>
           )}
         </div>
+        {navigation}
+      </div>
+      <div className="csc-app-main">
         {children}
       </div>
     </div>

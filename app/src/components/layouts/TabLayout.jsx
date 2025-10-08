@@ -13,7 +13,7 @@ export default function TabLayout({ tabs }) {
 
   const activeTabContent = tabs.find(tab => tab.id === activeTab);
 
-  return (
+  const navigation = (
     <>
       {/* Desktop Sidebar Navigation */}
       <nav className="csc-tab-nav">
@@ -42,11 +42,14 @@ export default function TabLayout({ tabs }) {
           </button>
         ))}
       </nav>
-
-      {/* Tab Content */}
-      <main className="csc-tab-content">
-        {activeTabContent?.content}
-      </main>
     </>
   );
+
+  const content = (
+    <div className="csc-tab-content">
+      {activeTabContent?.content}
+    </div>
+  );
+
+  return { navigation, content };
 }
