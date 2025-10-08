@@ -36,10 +36,30 @@
 
 .csc-tab-icon {
   font-size: var(--text-lg);
+  flex-shrink: 0;
 }
 
 .csc-tab-label {
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+/* Hide labels when sidebar is collapsed */
+.collapsed .csc-tab-label {
+  opacity: 0;
+  width: 0;
+}
+
+.expanded .csc-tab-label {
+  opacity: 1;
+}
+
+/* Center icons when collapsed */
+.collapsed .csc-tab-item {
+  justify-content: center;
+  padding: var(--space-md);
 }
 
 /* Mobile Top Tabs */
