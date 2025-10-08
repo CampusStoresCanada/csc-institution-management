@@ -15,13 +15,13 @@
 }
 
 .csc-form-field-content {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr auto;
   gap: var(--space-md);
+  align-items: flex-start;
 }
 
 .csc-form-field-value {
-  flex: 1;
   color: var(--color-text-primary);
   word-break: break-word;
 }
